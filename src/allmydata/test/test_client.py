@@ -139,7 +139,7 @@ class Basic(testutil.ReallyEqualMixin, unittest.TestCase):
         return [ s.get_serverid() for s in sb.get_servers_for_psi(key) ]
 
     def test_permute(self):
-        sb = StorageFarmBroker(None, True)
+        sb = StorageFarmBroker(None, True, [])
         for k in ["%d" % i for i in range(5)]:
             sb.test_add_rref(k, "rref")
 
