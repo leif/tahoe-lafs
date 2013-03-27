@@ -262,6 +262,9 @@ class Root(rend.Page):
             addr = "N/A"
             connected = "no"
             since = server.get_last_loss_time()
+        rref = server.get_rref()
+        if rref:
+            addr = "%s (%s)" % ( addr, ",".join( "%s:%s" % ( host, port ) for (ipv, host, port) in rref.getLocationHints() ) )
         announced = server.get_announcement_time()
         announcement = server.get_announcement()
         version = announcement["my-version"]
