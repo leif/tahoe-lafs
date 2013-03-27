@@ -469,19 +469,7 @@ class WebMixin(object):
 
     def GET(self, urlpath, followRedirect=False, return_response=False,
             **kwargs):
-        # if return_response=True, this fires with (data, statuscode,
-        # respheaders) instead of just data.
-        assert not isinstance(urlpath, unicode)
-        url = self.webish_url + urlpath
-        factory = HTTPClientGETFactory(url, method="GET",
-                                       followRedirect=followRedirect, **kwargs)
-        reactor.connectTCP("localhost", self.webish_port, factory)
-        d = factory.deferred
-        def _got_data(data):
-            return (data, factory.status, factory.response_headers)
-        if return_response:
-            d.addCallback(_got_data)
-        return factory.deferred
+        return self.makeHttpRequest( "GET", urlpath, followRedirect, return_response, **kwargs)
 
     def HEAD(self, urlpath, return_response=False, **kwargs):
         # this requires some surgery, because twisted.web.client doesn't want
@@ -495,9 +483,13 @@ class WebMixin(object):
             d.addCallback(_got_data)
         return factory.deferred
 
-    def PUT(self, urlpath, data, **kwargs):
-        url = self.webish_url + urlpath
-        return client.getPage(url, method="PUT", postdata=data, **kwargs)
+    def PUT(self, urlpath, followRedirect=True, return_response=False,
+            **kwargs):
+        return self.makeHttpRequest( "PUT", urlpath, followRedirect, return_response, **kwargs)
+
+#    def PUT(self, urlpath, data, **kwargs):
+#        url = self.webish_url + urlpath
+#        return client.getPage(url, method="PUT", postdata=data, **kwargs)
 
     def DELETE(self, urlpath):
         url = self.webish_url + urlpath
@@ -539,6 +531,23 @@ class WebMixin(object):
         url = self.webish_url + urlpath
         return client.getPage(url, method="POST", postdata=body,
                               headers=headers, followRedirect=followRedirect)
+
+    def makeHttpRequest(self, method, urlpath, followRedirect=False, return_response=False,
+            **kwargs):
+        # if return_response=True, this fires with (data, statuscode,
+        # respheaders) instead of just data.
+        assert not isinstance(urlpath, unicode)
+        url = self.webish_url + urlpath
+        factory = HTTPClientGETFactory(url, method=method,
+                                       followRedirect=followRedirect, **kwargs)
+        reactor.connectTCP("localhost", self.webish_port, factory)
+        d = factory.deferred
+        def _got_data(data):
+            import q; q.q(data, factory.status, factory.response_headers)
+            return (data, factory.status, factory.response_headers)
+        if return_response:
+            d.addCallback(_got_data)
+        return factory.deferred
 
     def shouldFail(self, res, expected_failure, which,
                    substring=None, response_substring=None):
