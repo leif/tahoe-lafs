@@ -1,12 +1,13 @@
 
 from twisted.python import usage
+from allmydata.scripts.common import BaseOptions
 
-class GenerateKeypairOptions(usage.Options):
+class GenerateKeypairOptions(BaseOptions):
     def getSynopsis(self):
-        return "Usage: tahoe admin generate-keypair"
+        return "Usage: tahoe [global-opts] admin generate-keypair"
 
     def getUsage(self, width=None):
-        t = usage.Options.getUsage(self, width)
+        t = BaseOptions.getUsage(self, width)
         t += """
 Generate a public/private keypair, dumped to stdout as two lines of ASCII..
 
@@ -20,15 +21,15 @@ def print_keypair(options):
     print >>out, "private:", privkey_vs
     print >>out, "public:", pubkey_vs
 
-class DerivePubkeyOptions(usage.Options):
+class DerivePubkeyOptions(BaseOptions):
     def parseArgs(self, privkey):
         self.privkey = privkey
 
     def getSynopsis(self):
-        return "Usage: tahoe admin derive-pubkey PRIVKEY"
+        return "Usage: tahoe [global-opts] admin derive-pubkey PRIVKEY"
 
     def getUsage(self, width=None):
-        t = usage.Options.getUsage(self, width)
+        t = BaseOptions.getUsage(self, width)
         t += """
 Given a private (signing) key that was previously generated with
 generate-keypair, derive the public key and print it to stdout.
@@ -45,7 +46,7 @@ def derive_pubkey(options):
     print >>out, "public:", pubkey_vs
     return 0
 
-class AdminCommand(usage.Options):
+class AdminCommand(BaseOptions):
     subCommands = [
         ("generate-keypair", None, GenerateKeypairOptions,
          "Generate a public/private keypair, write to stdout."),
@@ -56,9 +57,9 @@ class AdminCommand(usage.Options):
         if not hasattr(self, 'subOptions'):
             raise usage.UsageError("must specify a subcommand")
     def getSynopsis(self):
-        return "Usage: tahoe admin SUBCOMMAND"
+        return "Usage: tahoe [global-opts] admin SUBCOMMAND"
     def getUsage(self, width=None):
-        t = usage.Options.getUsage(self, width)
+        t = BaseOptions.getUsage(self, width)
         t += """
 Please run e.g. 'tahoe admin generate-keypair --help' for more details on
 each subcommand.
