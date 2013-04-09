@@ -6,11 +6,12 @@ from twisted.python import usage, failure
 from twisted.internet import defer
 from twisted.scripts import trial as twisted_trial
 from foolscap.logging import cli as foolscap_cli
+from allmydata.scripts.common import BaseOptions
 
 
-class DumpOptions(usage.Options):
+class DumpOptions(BaseOptions):
     def getSynopsis(self):
-        return "Usage: tahoe debug dump-share SHARE_FILENAME"
+        return "Usage: tahoe [global-opts] debug dump-share SHARE_FILENAME"
 
     optFlags = [
         ["offsets", None, "Display a table of section offsets."],
@@ -18,7 +19,7 @@ class DumpOptions(usage.Options):
         ]
 
     def getUsage(self, width=None):
-        t = usage.Options.getUsage(self, width)
+        t = BaseOptions.getUsage(self, width)
         t += """
 Print lots of information about the given share, by parsing the share's
 contents. This includes share type, lease information, encoding parameters,
@@ -405,9 +406,9 @@ def dump_MDMF_share(m, length, options):
 
 
 
-class DumpCapOptions(usage.Options):
+class DumpCapOptions(BaseOptions):
     def getSynopsis(self):
-        return "Usage: tahoe debug dump-cap [options] FILECAP"
+        return "Usage: tahoe [global-opts] debug dump-cap [options] FILECAP"
     optParameters = [
         ["nodeid", "n",
          None, "Specify the storage server nodeid (ASCII), to construct WE and secrets."],
@@ -420,7 +421,7 @@ class DumpCapOptions(usage.Options):
         self.cap = cap
 
     def getUsage(self, width=None):
-        t = usage.Options.getUsage(self, width)
+        t = BaseOptions.getUsage(self, width)
         t += """
 Print information about the given cap-string (aka: URI, file-cap, dir-cap,
 read-cap, write-cap). The URI string is parsed and unpacked. This prints the
@@ -607,9 +608,9 @@ def dump_uri_instance(u, nodeid, secret, out, show_header=True):
     else:
         print >>out, "unknown cap type"
 
-class FindSharesOptions(usage.Options):
+class FindSharesOptions(BaseOptions):
     def getSynopsis(self):
-        return "Usage: tahoe debug find-shares STORAGE_INDEX NODEDIRS.."
+        return "Usage: tahoe [global-opts] debug find-shares STORAGE_INDEX NODEDIRS.."
 
     def parseArgs(self, storage_index_s, *nodedirs):
         from allmydata.util.encodingutil import argv_to_abspath
@@ -617,7 +618,7 @@ class FindSharesOptions(usage.Options):
         self.nodedirs = map(argv_to_abspath, nodedirs)
 
     def getUsage(self, width=None):
-        t = usage.Options.getUsage(self, width)
+        t = BaseOptions.getUsage(self, width)
         t += """
 Locate all shares for the given storage index. This command looks through one
 or more node directories to find the shares. It returns a list of filenames,
@@ -657,7 +658,7 @@ def find_shares(options):
     return 0
 
 
-class CatalogSharesOptions(usage.Options):
+class CatalogSharesOptions(BaseOptions):
     """
 
     """
@@ -668,10 +669,10 @@ class CatalogSharesOptions(usage.Options):
             raise usage.UsageError("must specify at least one node directory")
 
     def getSynopsis(self):
-        return "Usage: tahoe debug catalog-shares NODEDIRS.."
+        return "Usage: tahoe [global-opts] debug catalog-shares NODEDIRS.."
 
     def getUsage(self, width=None):
-        t = usage.Options.getUsage(self, width)
+        t = BaseOptions.getUsage(self, width)
         t += """
 Locate all shares in the given node directories, and emit a one-line summary
 of each share. Run it like this:
@@ -879,16 +880,16 @@ def catalog_shares_one_abbrevdir(si_s, si_dir, now, out, err):
         print >>err, "Error processing %s" % quote_output(si_dir)
         failure.Failure().printTraceback(err)
 
-class CorruptShareOptions(usage.Options):
+class CorruptShareOptions(BaseOptions):
     def getSynopsis(self):
-        return "Usage: tahoe debug corrupt-share SHARE_FILENAME"
+        return "Usage: tahoe [global-opts] debug corrupt-share SHARE_FILENAME"
 
     optParameters = [
         ["offset", "o", "block-random", "Specify which bit to flip."],
         ]
 
     def getUsage(self, width=None):
-        t = usage.Options.getUsage(self, width)
+        t = BaseOptions.getUsage(self, width)
         t += """
 Corrupt the given share by flipping a bit. This will cause a
 verifying/downloading client to log an integrity-check failure incident, and
@@ -959,9 +960,9 @@ def corrupt_share(options):
 
 
 
-class ReplOptions(usage.Options):
+class ReplOptions(BaseOptions):
     def getSynopsis(self):
-        return "Usage: tahoe debug repl"
+        return "Usage: tahoe [global-opts] debug repl"
 
 def repl(options):
     import code
@@ -972,7 +973,7 @@ DEFAULT_TESTSUITE = 'allmydata'
 
 class TrialOptions(twisted_trial.Options):
     def getSynopsis(self):
-        return "Usage: tahoe debug trial [options] [[file|package|module|TestCase|testmethod]...]"
+        return "Usage: tahoe [global-opts] debug trial [options] [[file|package|module|TestCase|testmethod]...]"
 
     def parseOptions(self, all_subargs, *a, **kw):
         self.trial_args = list(all_subargs)
@@ -1005,9 +1006,9 @@ def fixOptionsClass( (subcmd, shortcut, OptionsClass, desc) ):
             t = OptionsClass.getSynopsis(self)
             i = t.find("Usage: flogtool ")
             if i >= 0:
-                return "Usage: tahoe debug flogtool " + t[i+len("Usage: flogtool "):]
+                return "Usage: tahoe [global-opts] debug flogtool " + t[i+len("Usage: flogtool "):]
             else:
-                return "Usage: tahoe debug flogtool %s [options]" % (subcmd,)
+                return "Usage: tahoe [global-opts] debug flogtool %s [options]" % (subcmd,)
     return (subcmd, shortcut, FixedOptionsClass, desc)
 
 class FlogtoolOptions(foolscap_cli.Options):
@@ -1016,7 +1017,7 @@ class FlogtoolOptions(foolscap_cli.Options):
         self.subCommands = map(fixOptionsClass, self.subCommands)
 
     def getSynopsis(self):
-        return "Usage: tahoe debug flogtool (%s) [command options]" % ("|".join([x[0] for x in self.subCommands]))
+        return "Usage: tahoe [global-opts] debug flogtool (%s) [command options]" % ("|".join([x[0] for x in self.subCommands]))
 
     def parseOptions(self, all_subargs, *a, **kw):
         self.flogtool_args = list(all_subargs)
@@ -1042,7 +1043,7 @@ def flogtool(config):
     return foolscap_cli.run_flogtool()
 
 
-class DebugCommand(usage.Options):
+class DebugCommand(BaseOptions):
     subCommands = [
         ["dump-share", None, DumpOptions,
          "Unpack and display the contents of a share (uri_extension and leases)."],
@@ -1060,7 +1061,7 @@ class DebugCommand(usage.Options):
     def getSynopsis(self):
         return ""
     def getUsage(self, width=None):
-        #t = usage.Options.getUsage(self, width)
+        #t = BaseOptions.getUsage(self, width)
         t = """Usage: tahoe debug SUBCOMMAND
 Subcommands:
     tahoe debug dump-share      Unpack and display the contents of a share.
