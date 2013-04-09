@@ -1173,8 +1173,20 @@ class Put(GridTestMixin, CLITestMixin, unittest.TestCase):
         d = self.do_cli("create-alias", "tahoe")
         d.addCallback(lambda res:
                       self.do_cli("put", "--mutable", fn1, "tahoe:uploaded.txt"))
+        def _check(res):
+            (rc, out, err) = res
+            self.failUnlessEqual(rc, 0, str(res))
+            self.failUnlessEqual(err.strip(), "201 Created", str(res))
+            self.uri = out
+        d.addCallback(_check)
         d.addCallback(lambda res:
                       self.do_cli("put", fn2, "tahoe:uploaded.txt"))
+        def _check2(res):
+            (rc, out, err) = res
+            self.failUnlessEqual(rc, 0, str(res))
+            self.failUnlessEqual(err.strip(), "200 OK", str(res))
+            self.failUnlessEqual(out, self.uri, str(res))
+        d.addCallback(_check2)
         d.addCallback(lambda res:
                       self.do_cli("get", "tahoe:uploaded.txt"))
         d.addCallback(lambda (rc,out,err): self.failUnlessReallyEqual(out, DATA2))
@@ -2466,6 +2478,34 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
             self.failUnlessEqual(to_str(file2data["ro_uri"]), self._test_read_uri)
             self.failIfIn("rw_uri", file2data)
         d.addCallback(_got_testdir_json)
+        return d
+
+    def test_cp_verbose(self):
+        self.basedir = "cli/Cp/cp_verbose"
+        self.set_up_grid()
+
+        # Write two test files, which we'll copy to the grid.
+        test1_path = os.path.join(self.basedir, "test1")
+        test2_path = os.path.join(self.basedir, "test2")
+        fileutil.write(test1_path, "test1")
+        fileutil.write(test2_path, "test2")
+
+        d = self.do_cli("create-alias", "tahoe")
+        d.addCallback(lambda ign:
+            self.do_cli("cp", "--verbose", test1_path, test2_path, "tahoe:"))
+        def _check(res):
+            (rc, out, err) = res
+            self.failUnlessEqual(rc, 0, str(res))
+            self.failUnlessIn("Success: files copied", out, str(res))
+            self.failUnlessEqual(err, """\
+attaching sources to targets, 2 files / 0 dirs in root
+targets assigned, 1 dirs, 2 files
+starting copy, 2 files, 1 directories
+1/2 files, 0/1 directories
+2/2 files, 0/1 directories
+1/1 directories
+""", str(res))
+        d.addCallback(_check)
         return d
 
 
