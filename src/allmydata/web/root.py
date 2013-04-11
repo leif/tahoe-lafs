@@ -288,6 +288,7 @@ class Root(rend.Page):
         announcement = server.get_announcement()
         version = announcement["my-version"]
         service_name = announcement["service-name"]
+        available_space = abbreviate_size(server.get_available_space())
 
         TIME_FORMAT = "%H:%M:%S %d-%b-%Y"
         ctx.fillSlots("address", addr)
@@ -299,6 +300,7 @@ class Root(rend.Page):
                                                  time.localtime(announced)))
         ctx.fillSlots("version", version)
         ctx.fillSlots("service_name", service_name)
+        ctx.fillSlots("available_space", available_space)
 
         return ctx.tag
 
