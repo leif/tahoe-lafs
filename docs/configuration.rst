@@ -378,6 +378,12 @@ Client Configuration
     See `<specifications/mutable.rst>`_ for details about mutable file
     formats.
 
+``peers.preferred = (string, optional)``
+
+    This is an optional comma-separated list of node IDs that should be
+    prioritized during server selection.
+
+
 Frontend Configuration
 ======================
 
