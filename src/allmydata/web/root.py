@@ -173,7 +173,7 @@ class Root(rend.Page):
         long_tubid = self.client.get_long_tubid()
         if long_nodeid is not None:
             tubid_s = "TubID: "+long_tubid
-            return T.td(title=tubid_s)[self.client.get_long_nodeid()]
+            return T.td(title=tubid_s)[long_nodeid]
         else:
             return T.td()[long_tubid]
     def data_my_nickname(self, ctx, data):
