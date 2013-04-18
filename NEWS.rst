@@ -2,7 +2,28 @@
 User-Visible Changes in Tahoe-LAFS
 ==================================
 
+Leif's merged branch
+--------------------
+
+This branch lives at https://github.com/leif/tahoe-lafs/commits/merged
+
+These are the changes currently included:
+
+- There is a new configuration option called ``peers.preferred`` which contains
+  a list of storage server node IDs to move to the beginning of the server
+  selection list. See ``configuration.rst`` for more information. (ticket #467)
+- The list of storage servers on the WUI's welcome page includes a new "Space
+  Available" column. (ticket #648)
+- Connection hints for connected servers are listed on the welcome page, in
+  addition to the resolved IP address. This is useful for troubleshooting
+  grids that use Tor hidden services.
+- tarcieri's redesigned directory listing page
+  (https://github.com/tahoe-lafs/tahoe-lafs/pull/32
+  d9dc528b705ccc0921faf4399fdb0db8c12d40eb)
+
+
 Release 1.10 (2013-??-??)
+-------------------------
 
 New Features
 ''''''''''''
