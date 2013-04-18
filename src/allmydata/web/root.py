@@ -169,13 +169,8 @@ class Root(rend.Page):
     def data_import_path(self, ctx, data):
         return str(allmydata)
     def render_my_nodeid(self, ctx, data):
-        long_nodeid = self.client.get_long_nodeid()
-        long_tubid = self.client.get_long_tubid()
-        if long_nodeid is not None:
-            tubid_s = "TubID: "+long_tubid
-            return T.td(title=tubid_s)[long_nodeid]
-        else:
-            return T.td()[long_tubid]
+        tubid_s = "TubID: "+self.client.get_long_tubid()
+        return T.td(title=tubid_s)[self.client.get_long_nodeid()]
     def data_my_nickname(self, ctx, data):
         return self.client.nickname
 
