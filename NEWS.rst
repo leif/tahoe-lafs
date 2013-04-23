@@ -2,24 +2,31 @@
 User-Visible Changes in Tahoe-LAFS
 ==================================
 
-Leif's merged branch
---------------------
+Truckee-LAFS
+------------
 
-This branch lives at https://github.com/leif/tahoe-lafs/commits/merged
+Truckee is near Tahoe. This branch includes changes which are not yet ready for
+inclusion upstream due to lack of review, tests, or other reasons. It also
+includes code to which contributors retain their copyright (as opposed to
+assigning it to the Tahoe-LAFS Foundation; see ticket #1938 for details). This
+branch will not be rebased, and should frequently have master merged.
 
-These are the changes currently included:
+These are the differences between Truckee and the Tahoe-LAFS upstream master:
 
-- There is a new configuration option called ``peers.preferred`` which contains
-  a list of storage server node IDs to move to the beginning of the server
-  selection list. See ``configuration.rst`` for more information. (ticket #467)
-- The list of storage servers on the WUI's welcome page includes a new "Space
-  Available" column. (ticket #648)
+- #467: There is a new configuration option called ``peers.preferred`` which
+  contains a list of storage server node IDs to move to the beginning of the
+  server selection list. See ``configuration.rst`` for more information.
+- #648: The list of storage servers on the WUI's welcome page includes a new
+  "Space Available" column.
 - Connection hints for connected servers are listed on the welcome page, in
-  addition to the resolved IP address. This is useful for troubleshooting
-  grids that use Tor hidden services.
-- tarcieri's redesigned directory listing page
-  (https://github.com/tahoe-lafs/tahoe-lafs/pull/32
-  d9dc528b705ccc0921faf4399fdb0db8c12d40eb)
+  addition to the resolved IP address. This is useful for troubleshooting grids
+  that use Tor hidden services, but not very useful because it doesn't display
+  the address until after a server has been successfully connected to at least
+  once.
+- https://github.com/tahoe-lafs/tahoe-lafs/pull/32 (tarcieri's redesigned
+  directory listing page)
+
+Truckee currently lives at https://github.com/leif/tahoe-lafs/commits/truckee
 
 
 Release 1.10 (2013-??-??)
