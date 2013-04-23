@@ -7,16 +7,17 @@ Truckee-LAFS
 
 Truckee is near Tahoe. This branch includes changes which are not yet ready for
 inclusion upstream due to lack of review, tests, or other reasons. It also
-includes code to which contributors retain their copyright (as opposed to
-assigning it to the Tahoe-LAFS Foundation; see ticket #1938 for details). This
-branch will not be rebased, and should frequently have master merged.
+currently includes code to which contributors retain their copyright (as
+opposed to executing a copyright assignment contract with the Tahoe-LAFS
+Foundation; see ticket `#1938` for details). This branch will not be rebased,
+and is expected to frequently have the official Tahoe-LAFS master merged.
 
-These are the differences between Truckee and the Tahoe-LAFS upstream master:
+Current differences between Truckee and the Tahoe-LAFS upstream master:
 
-- #467: There is a new configuration option called ``peers.preferred`` which
+- `#467`: There is a new configuration option called ``peers.preferred`` which
   contains a list of storage server node IDs to move to the beginning of the
   server selection list. See ``configuration.rst`` for more information.
-- #648: The list of storage servers on the WUI's welcome page includes a new
+- `#648`: The list of storage servers on the WUI's welcome page includes a new
   "Space Available" column.
 - Connection hints for connected servers are listed on the welcome page, in
   addition to the resolved IP address. This is useful for troubleshooting grids
