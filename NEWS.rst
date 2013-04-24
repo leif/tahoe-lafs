@@ -30,6 +30,9 @@ Current differences between Truckee and the Tahoe-LAFS upstream master:
 
 Truckee currently lives at https://github.com/leif/tahoe-lafs/commits/truckee
 
+This URL will display the full diff of truckee vs master:
+https://github.com/leif/tahoe-lafs/compare/master...truckee#files_bucket
+
 
 Release 1.10 (2013-??-??)
 -------------------------
