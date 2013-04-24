@@ -26,6 +26,7 @@ Current differences between Truckee and the Tahoe-LAFS upstream master:
   once.
 - https://github.com/tahoe-lafs/tahoe-lafs/pull/32 (tarcieri's redesigned
   directory listing page)
+- `#1953`: include git branch name in the --version[-and-path] output
 
 Truckee currently lives at https://github.com/leif/tahoe-lafs/commits/truckee
 
