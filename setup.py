@@ -246,6 +246,7 @@ GIT_VERSION_BODY = '''
 __pkgname__ = "%(pkgname)s"
 real_version = "%(version)s"
 full_version = "%(full)s"
+branch = "%(branch)s"
 verstr = "%(normalized)s"
 __version__ = verstr
 '''
@@ -309,6 +310,7 @@ def versions_from_git(tag_prefix, verbose=False):
         normalized_version = pieces[0]
     else:
         normalized_version = "%s.post%s" % (pieces[0], pieces[1])
+
     stdout = run_command([GIT, "rev-parse", "HEAD"], cwd=source_dir)
     if stdout is None:
         return {}
@@ -316,7 +318,12 @@ def versions_from_git(tag_prefix, verbose=False):
     if version.endswith("-dirty"):
         full += "-dirty"
         normalized_version += ".dev0"
-    return {"version": version, "normalized": normalized_version, "full": full}
+
+    # Thanks to Jistanidiot at <http://stackoverflow.com/questions/6245570/get-current-branch-name>.
+    stdout = run_command([GIT, "rev-parse", "--abbrev-ref", "HEAD"], cwd=source_dir)
+    branch = (stdout or "unknown").strip()
+
+    return {"version": version, "normalized": normalized_version, "full": full, "branch": branch}
 
 # setup.cfg has an [aliases] section which runs "update_version" before many
 # commands (like "build" and "sdist") that need to know our package version
@@ -350,7 +357,9 @@ class UpdateVersion(Command):
                     { "pkgname": self.distribution.get_name(),
                       "version": versions["version"],
                       "normalized": versions["normalized"],
-                      "full": versions["full"] })
+                      "full": versions["full"],
+                      "branch": versions["branch"],
+                    })
             f.close()
             print("git-version: wrote '%s' into '%s'" % (versions["version"], fn))
         return versions.get("normalized", None)
