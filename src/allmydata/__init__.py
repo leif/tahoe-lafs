@@ -15,19 +15,9 @@ __version__ = "unknown"
 try:
     from allmydata._version import __version__
 except ImportError:
-    # We're running in a tree that hasn't run update_version, and didn't
-    # come with a _version.py, so we don't know what our version is.
-    # This should not happen very often.
-    pass
-
-full_version = "unknown"
-branch = "unknown"
-try:
-    from allmydata._version import full_version, branch
-except ImportError:
-    # We're running in a tree that hasn't run update_version, and didn't
-    # come with a _version.py, so we don't know what our full version or
-    # branch is. This should not happen very often.
+    # We're running in a tree that hasn't run "./setup.py darcsver", and didn't
+    # come with a _version.py, so we don't know what our version is. This should
+    # not happen very often.
     pass
 
 __appname__ = "unknown"
@@ -201,9 +191,7 @@ def get_package_versions_and_locations():
                 packages.append( (pkgname, (None, None, trace_info)) )
             else:
                 comment = None
-                if pkgname == __appname__ and (branch != "master" or ".post" in __version__ or ".dev" in __version__):
-                    comment = "%s: %s" % (branch, full_version)
-                elif pkgname == 'setuptools' and hasattr(module, '_distribute'):
+                if pkgname == 'setuptools' and hasattr(module, '_distribute'):
                     # distribute does not report its version in any module variables
                     comment = 'distribute'
                 packages.append( (pkgname, (get_version(module, '__version__'), package_dir(module.__file__), comment)) )
