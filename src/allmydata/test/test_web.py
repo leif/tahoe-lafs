@@ -193,6 +193,8 @@ class FakeDisplayableServer(StubServer):
         return self.announcement["nickname"]
     def get_available_space(self):
         return 0
+    def get_storage_furl(self):
+        return "pb://abcde@nowhere:0/fake"
 
 class FakeBucketCounter(object):
     def get_state(self):
