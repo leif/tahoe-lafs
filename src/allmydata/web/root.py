@@ -6,6 +6,7 @@ from nevow import rend, url, tags as T
 from nevow.inevow import IRequest
 from nevow.static import File as nevow_File # TODO: merge with static.File?
 from nevow.util import resource_filename
+from foolscap import referenceable
 
 import allmydata # to display import path
 from allmydata import get_package_versions_string
@@ -282,9 +283,8 @@ class Root(rend.Page):
             addr = "N/A"
             connected = "no"
             since = server.get_last_loss_time()
-        rref = server.get_rref()
-        if rref:
-            addr = "%s (%s)" % ( addr, ",".join( "%s:%s" % ( host, port ) for (ipv, host, port) in rref.getLocationHints() ) )
+        _, _, hints, _ = referenceable.decode_furl(server.get_storage_furl())
+        addr = "%s (%s)" % ( addr, ",".join( "%s:%s" % ( host, port ) for (ipv, host, port) in hints ) )
         announced = server.get_announcement_time()
         announcement = server.get_announcement()
         version = announcement["my-version"]
