@@ -19,11 +19,9 @@ Current differences between Truckee and the Tahoe-LAFS upstream master:
   server selection list. See ``configuration.rst`` for more information.
 - `#648`_: The list of storage servers on the WUI's welcome page includes a new
   "Space Available" column.
-- Connection hints for connected servers are listed on the welcome page, in
+- Connection hints for storage servers are listed on the welcome page, in
   addition to the resolved IP address. This is useful for troubleshooting grids
-  that use Tor hidden services, but not very useful because it doesn't display
-  the address until after a server has been successfully connected to at least
-  once.
+  that use Tor hidden services.
 - `pull request #32`_ (tarcieri's redesigned directory listing page)
 - `#1953`_: include git branch name in the --version[-and-path] output
 
