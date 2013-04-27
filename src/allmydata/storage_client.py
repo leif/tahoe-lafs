@@ -265,9 +265,11 @@ class NativeStorageServer:
         return self.last_loss_time
     def get_announcement_time(self):
         return self.announcement_time
+    def get_storage_furl(self):
+        return str(self.announcement["anonymous-storage-FURL"])
 
     def start_connecting(self, tub, trigger_cb):
-        furl = str(self.announcement["anonymous-storage-FURL"])
+        furl = self.get_storage_furl()
         self._trigger_cb = trigger_cb
         self._reconnector = tub.connectTo(furl, self._got_connection)
 
