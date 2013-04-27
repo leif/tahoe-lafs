@@ -191,6 +191,8 @@ class FakeDisplayableServer(StubServer):
         return self.announcement
     def get_nickname(self):
         return self.announcement["nickname"]
+    def get_rref(self):
+        return None
 
 class FakeBucketCounter(object):
     def get_state(self):
