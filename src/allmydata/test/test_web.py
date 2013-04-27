@@ -191,6 +191,9 @@ class FakeDisplayableServer(StubServer):
         return self.announcement
     def get_nickname(self):
         return self.announcement["nickname"]
+    def get_storage_furl(self):
+        return "pb://abcde@nowhere:0/fake"
+
 
 class FakeBucketCounter(object):
     def get_state(self):
