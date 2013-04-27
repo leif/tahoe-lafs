@@ -18,7 +18,7 @@ want to read `the "historical known issues" document`_.
 .. _the "historical known issues" document: historical/historical_known_issues.txt
 
 
-Known Issues in Tahoe-LAFS v1.9.2, released 3-Jul-2012
+Known Issues in Tahoe-LAFS v1.10, released 01-May-2013
 ======================================================
 
   *  `Unauthorized access by JavaScript in unrelated files`_
@@ -279,13 +279,14 @@ buffer overflow. (Note that browsers do not execute scripts inside IMG tags,
 even for SVG images).
 
 In addition, if your Tahoe node connects to its grid over Tor or i2p, but the
-web browser you use to access it does not, then this image link may reveal
-your use of Tahoe to the outside world. It is not recommended to use a
-browser in this way, because other links in Tahoe-stored content would reveal
-even more information (e.g. an attacker could store an HTML file with unique
-CSS references into a shared Tahoe grid, then send your pseudonym a message
-with its URI, then observe your browser loading that CSS file, and thus link
-the source IP address of your web client to that pseudonym).
+web browser you use to access your node does not, then this image link may
+reveal your use of Tahoe (and that grid) to the outside world. It is not
+recommended to use a browser in this way, because other links in Tahoe-stored
+content would reveal even more information (e.g. an attacker could store an
+HTML file with unique CSS references into a shared Tahoe grid, then send your
+pseudonym a message with its URI, then observe your browser loading that CSS
+file, and thus link the source IP address of your web client to that
+pseudonym).
 
 A future version of Tahoe will probably replace the Google Chart API link
 (which was deprecated by Google in April 2012) with client-side javascript
