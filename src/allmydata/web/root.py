@@ -124,7 +124,7 @@ class IncidentReporter(RenderMixin, rend.Page):
                 details=get_arg(req, "details", ""),
                 level=log.WEIRD, umid="LkD9Pw")
         req.setHeader("content-type", "text/plain")
-        return "Thank you for your report!"
+        return "An incident report has been saved to logs/incidents/ in the node directory."
 
 SPACE = u"\u00A0"*2
 
@@ -390,6 +390,6 @@ class Root(rend.Page):
             T.input(type="hidden", name="t", value="report-incident"),
             "What went wrong?"+SPACE,
             T.input(type="text", name="details"), SPACE,
-            T.input(type="submit", value=u"Report \u00BB"),
+            T.input(type="submit", value=u"Save \u00BB"),
             ]]
         return T.div[form]
