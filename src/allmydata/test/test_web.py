@@ -616,6 +616,8 @@ class Web(WebMixin, WebErrorMixin, testutil.StallMixin, testutil.ReallyEqualMixi
             self.failUnlessIn('<a href="status">Recent and Active Operations</a>', res)
             self.failUnlessIn('<a href="statistics">Operational Statistics</a>', res)
             self.failUnlessIn('<input type="hidden" name="t" value="report-incident" />', res)
+            self.failUnlessIn('Page rendered at', res)
+            self.failUnlessIn('Tahoe-LAFS code imported from:', res)
             res_u = res.decode('utf-8')
             self.failUnlessIn(u'<td>fake_nickname \u263A</td>', res_u)
             self.failUnlessIn(u'<div class="nickname">other_nickname \u263B</div>', res_u)
@@ -4425,6 +4427,8 @@ class IntroducerWeb(unittest.TestCase):
         def _check(res):
             self.failUnlessIn('Welcome to the Tahoe-LAFS Introducer', res)
             self.failUnlessIn(FAVICON_MARKUP, res)
+            self.failUnlessIn('Page rendered at', res)
+            self.failUnlessIn('Tahoe-LAFS code imported from:', res)
         d.addCallback(_check)
         return d
 
