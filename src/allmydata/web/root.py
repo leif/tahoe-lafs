@@ -284,7 +284,13 @@ class Root(rend.Page):
             addr = "N/A"
             connected = "no"
             since = server.get_last_loss_time()
-        announced = server.get_announcement_time()
+        last_received_data_time = server.get_last_received_data_time()
+
+        if last_received_data_time is None:
+            last_received_data_time = "N/A"
+        else:
+            last_received_data_time = time.strftime(TIME_FORMAT, time.localtime(last_received_data_time))
+
         announcement = server.get_announcement()
         version = announcement["my-version"]
         service_name = announcement["service-name"]
@@ -294,8 +300,7 @@ class Root(rend.Page):
         ctx.fillSlots("connected-bool", bool(rhost))
         ctx.fillSlots("since", time.strftime(TIME_FORMAT,
                                              time.localtime(since)))
-        ctx.fillSlots("announced", time.strftime(TIME_FORMAT,
-                                                 time.localtime(announced)))
+        ctx.fillSlots("last_received_data_time", last_received_data_time)
         ctx.fillSlots("version", version)
         ctx.fillSlots("service_name", service_name)
 
