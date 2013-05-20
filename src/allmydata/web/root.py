@@ -293,7 +293,6 @@ class Root(rend.Page):
 
         announcement = server.get_announcement()
         version = announcement["my-version"]
-        service_name = announcement["service-name"]
 
         ctx.fillSlots("address", addr)
         ctx.fillSlots("connected", connected)
@@ -302,7 +301,6 @@ class Root(rend.Page):
                                              time.localtime(since)))
         ctx.fillSlots("last_received_data_time", last_received_data_time)
         ctx.fillSlots("version", version)
-        ctx.fillSlots("service_name", service_name)
 
         return ctx.tag
 
