@@ -185,7 +185,7 @@ class FakeDisplayableServer(StubServer):
         return ""
     def get_last_loss_time(self):
         return None
-    def get_announcement_time(self):
+    def get_last_received_data_time(self):
         return None
     def get_announcement(self):
         return self.announcement
