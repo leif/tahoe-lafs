@@ -264,6 +264,20 @@ class Root(rend.Page):
         sb = self.client.get_storage_broker()
         return sorted(sb.get_known_servers(), key=lambda s: s.get_serverid())
 
+    def _time_helper(self, abs_time):
+        if abs_time is None:
+            abs_time_str, rel_time_str = "N/A", "N/A"
+        else:
+            delta = int( time.time() - abs_time )
+            seconds = delta % 60
+            delta  -= seconds
+            minutes = (delta / 60) % 60
+            delta  -= minutes * 60
+            hours   = delta / (60*60)
+            rel_time_str = "%sh%sm%ss" % (hours, minutes, seconds)
+            abs_time_str = time.strftime(TIME_FORMAT, time.localtime(abs_time))
+        return abs_time_str, rel_time_str
+
     def render_service_row(self, ctx, server):
         nodeid = server.get_serverid()
 
@@ -278,28 +292,24 @@ class Root(rend.Page):
             else:
                 rhost_s = str(rhost)
             addr = rhost_s
-            connected = "yes"
-            since = server.get_last_connect_time()
+            service_connection_status = "Connected"
+            service_connection_status_abs_time, service_connection_status_rel_time = self._time_helper(server.get_last_connect_time())
         else:
             addr = "N/A"
-            connected = "no"
-            since = server.get_last_loss_time()
-        last_received_data_time = server.get_last_received_data_time()
+            service_connection_status = "Disconnected"
+            service_connection_status_abs_time, service_connection_status_rel_time = self._time_helper(server.get_last_loss_time())
 
-        if last_received_data_time is None:
-            last_received_data_time = "N/A"
-        else:
-            last_received_data_time = time.strftime(TIME_FORMAT, time.localtime(last_received_data_time))
+        last_received_data_abs_time, last_received_data_rel_time = self._time_helper(server.get_last_received_data_time())
 
         announcement = server.get_announcement()
         version = announcement["my-version"]
 
         ctx.fillSlots("address", addr)
-        ctx.fillSlots("connected", connected)
-        ctx.fillSlots("connected-bool", bool(rhost))
-        ctx.fillSlots("since", time.strftime(TIME_FORMAT,
-                                             time.localtime(since)))
-        ctx.fillSlots("last_received_data_time", last_received_data_time)
+        ctx.fillSlots("service_connection_status", service_connection_status)
+        ctx.fillSlots("service_connection_status_abs_time", service_connection_status_abs_time)
+        ctx.fillSlots("service_connection_status_rel_time", service_connection_status_rel_time)
+        ctx.fillSlots("last_received_data_abs_time", last_received_data_abs_time)
+        ctx.fillSlots("last_received_data_rel_time", last_received_data_rel_time)
         ctx.fillSlots("version", version)
 
         return ctx.tag

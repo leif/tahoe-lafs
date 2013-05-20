@@ -82,11 +82,16 @@ body {
     margin-top: 2px;
 }
 
-.connected-yes {
+a.timestamp {
+    color: inherit;
+    text-decoration:none;
+}
+
+.connected-yes, .service-Connected {
     background: #468847;
 }
 
-.connected-no {
+.connected-no, .service-Disconnected {
     background: #B94A48;
 }
 
