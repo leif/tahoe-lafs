@@ -1,5 +1,7 @@
 # from the Python Standard Library
-import os, re, socket, sys, subprocess, errno
+import os, re, socket, subprocess, errno
+
+from sys import platform
 
 # from Twisted
 from twisted.internet import defer, threads, reactor
@@ -81,11 +83,11 @@ def get_local_addresses_async(target="198.41.0.4"): # A.ROOT-SERVERS.NET
     """
     addresses = []
     local_ip = get_local_ip_for(target)
-    if local_ip:
+    if local_ip is not None:
         addresses.append(local_ip)
 
-    if sys.platform == "cygwin":
-        d = _cygwin_hack_find_addresses(target)
+    if platform == "cygwin":
+        d = _cygwin_hack_find_addresses()
     else:
         d = _find_addresses_via_config()
 
@@ -145,7 +147,7 @@ _win32_commands = (('route.exe', ('print',), _win32_re),)
 
 # These work in most Unices.
 _addr_re = re.compile(r'^\s*inet [a-zA-Z]*:?(?P<address>\d+\.\d+\.\d+\.\d+)[\s/].+$', flags=re.M|re.I|re.S)
-_unix_commands = (('/bin/ip addr', (), _addr_re),
+_unix_commands = (('/bin/ip', ('addr',), _addr_re),
                   ('/sbin/ifconfig', ('-a',), _addr_re),
                   ('/usr/sbin/ifconfig', ('-a',), _addr_re),
                   ('/usr/etc/ifconfig', ('-a',), _addr_re),
@@ -161,7 +163,7 @@ def _synchronously_find_addresses_via_config():
     # originally by Greg Smith, hacked by Zooko and then Daira
 
     # We don't reach here for cygwin.
-    if sys.platform == 'win32':
+    if platform == 'win32':
         commands = _win32_commands
     else:
         commands = _unix_commands
@@ -189,34 +191,33 @@ def _synchronously_find_addresses_via_config():
 
 def _query(path, args, regex):
     env = {'LANG': 'en_US.UTF-8'}
-    for trial in xrange(5):
+    TRIES = 5
+    for trial in xrange(TRIES):
         try:
             p = subprocess.Popen([path] + list(args), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
             (output, err) = p.communicate()
             break
         except OSError, e:
-            if e.errno == errno.EINTR:
+            if e.errno == errno.EINTR and trial < TRIES-1:
                 continue
+            raise
 
     addresses = []
     outputsplit = output.split('\n')
     for outline in outputsplit:
         m = regex.match(outline)
         if m:
-            addr = m.groupdict()['address']
+            addr = m.group('address')
             if addr not in addresses:
                 addresses.append(addr)
 
     return addresses
 
-def _cygwin_hack_find_addresses(target):
+def _cygwin_hack_find_addresses():
     addresses = []
-    for h in [target, "localhost", "127.0.0.1",]:
-        try:
-            addr = get_local_ip_for(h)
-            if addr not in addresses:
-                addresses.append(addr)
-        except socket.gaierror:
-            pass
+    for h in ["localhost", "127.0.0.1",]:
+        addr = get_local_ip_for(h)
+        if addr is not None and addr not in addresses:
+            addresses.append(addr)
 
     return defer.succeed(addresses)
