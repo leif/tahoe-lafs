@@ -15,6 +15,7 @@ from allmydata.web import filenode, directory, unlinked, status, operations
 from allmydata.web import storage
 from allmydata.web.common import abbreviate_size, getxmlfile, WebError, \
      get_arg, RenderMixin, get_format, get_mutable_type, TIME_FORMAT
+from allmydata.util.time_format import format_delta
 
 
 class URIHandler(RenderMixin, rend.Page):
@@ -264,22 +265,6 @@ class Root(rend.Page):
         sb = self.client.get_storage_broker()
         return sorted(sb.get_known_servers(), key=lambda s: s.get_serverid())
 
-    def _fmt_time_delta(self, time_1, time_2=None):
-        if time_1 is None:
-            absolute_str, relative_str = "N/A", "N/A"
-        else:
-            if time_2 is None:
-                time_2 = time.time()
-            delta = int( time_2 - time_1 )
-            seconds = delta % 60
-            delta  -= seconds
-            minutes = (delta / 60) % 60
-            delta  -= minutes * 60
-            hours   = delta / (60*60)
-            relative_str = "%sh%sm%ss" % (hours, minutes, seconds)
-            absolute_str = time.strftime(TIME_FORMAT, time.localtime(time_1))
-        return absolute_str, relative_str
-
     def render_service_row(self, ctx, server):
         nodeid = server.get_serverid()
 
@@ -295,13 +280,13 @@ class Root(rend.Page):
                 rhost_s = str(rhost)
             addr = rhost_s
             service_connection_status = "Connected"
-            service_connection_status_abs_time, service_connection_status_rel_time = self._fmt_time_delta(server.get_last_connect_time())
+            service_connection_status_abs_time, service_connection_status_rel_time = format_delta(server.get_last_connect_time())
         else:
             addr = "N/A"
             service_connection_status = "Disconnected"
-            service_connection_status_abs_time, service_connection_status_rel_time = self._fmt_time_delta(server.get_last_loss_time())
+            service_connection_status_abs_time, service_connection_status_rel_time = format_delta(server.get_last_loss_time())
 
-        last_received_data_abs_time, last_received_data_rel_time = self._fmt_time_delta(server.get_last_received_data_time())
+        last_received_data_abs_time, last_received_data_rel_time = format_delta(server.get_last_received_data_time())
 
         announcement = server.get_announcement()
         version = announcement["my-version"]
