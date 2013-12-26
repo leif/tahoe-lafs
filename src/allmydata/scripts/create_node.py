@@ -24,6 +24,10 @@ class CreateNodeOptions(CreateClientOptions):
     optFlags = [
         ("no-storage", None, "Do not offer storage service to other nodes."),
         ]
+    optParameters = [
+        ("storedir", "s",  None, "Path where the storage will be placed."),
+        ("tempdir", "t",  None, "Path to the temporary directory."),
+        ]
 
     def getSynopsis(self):
         return "Usage:  %s [global-opts] create-node [options] [NODEDIR]" % (self.command_name,)
@@ -89,6 +93,16 @@ def write_node_config(c, config):
     c.write("web.static = public_html\n")
     c.write("#tub.port =\n")
     c.write("#tub.location = \n")
+    logdir = config.get("logdir", "")
+    if logdir:
+        c.write("logdir = %s\n" % logdir)
+    else:
+        c.write("#logdir =\n")
+    tempdir = config.get("tempdir", "")
+    if tempdir:
+        c.write("tempdir = %s\n" % tempdir)
+    else:
+        c.write("#tempdir =\n")
     c.write("#log_gatherer.furl =\n")
     c.write("#timeout.keepalive =\n")
     c.write("#timeout.disconnect =\n")
@@ -139,6 +153,11 @@ def create_node(config, out=sys.stdout, err=sys.stderr):
     c.write("enabled = %s\n" % boolstr[storage_enabled])
     c.write("#readonly =\n")
     c.write("reserved_space = 1G\n")
+    storedir = config.get("storedir", "")
+    if storedir:
+        c.write("storedir = %s\n" % storedir)
+    else:
+        c.write("#storedir =\n")
     c.write("#expire.enabled =\n")
     c.write("#expire.mode =\n")
     c.write("\n")
