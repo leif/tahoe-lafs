@@ -68,3 +68,21 @@ def parse_date(s):
     # day
     return int(iso_utc_time_to_seconds(s + "T00:00:00"))
 
+def format_delta(time_1, time_2=None):
+    TIME_FORMAT = "%H:%M:%S %d-%b-%Y"
+    if time_1 is None:
+        absolute_str, relative_str = "N/A", "N/A"
+    else:
+        if time_2 is None:
+            time_2 = time.time()
+        delta = int( time_2 - time_1 )
+        seconds = delta % 60
+        delta  -= seconds
+        minutes = (delta / 60) % 60
+        delta  -= minutes * 60
+        hours   = delta / (60*60)
+        relative_str = "%sh%sm%ss" % (hours, minutes, seconds)
+        absolute_str = time.strftime(TIME_FORMAT, time.localtime(time_1))
+    return absolute_str, relative_str
+
+
