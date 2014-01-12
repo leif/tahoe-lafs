@@ -50,7 +50,7 @@ class IntroducerClient(service.Service, Referenceable):
 
     def __init__(self, tub, introducer_furl,
                  nickname, my_version, oldest_supported,
-                 app_versions, sequencer):
+                 app_versions):
         self._tub = tub
         self.introducer_furl = introducer_furl
 
@@ -59,7 +59,6 @@ class IntroducerClient(service.Service, Referenceable):
         self._my_version = my_version
         self._oldest_supported = oldest_supported
         self._app_versions = app_versions
-        self._sequencer = sequencer
 
         self._my_subscriber_info = { "version": 0,
                                      "nickname": self._nickname,
@@ -199,7 +198,7 @@ class IntroducerClient(service.Service, Referenceable):
             self.publish("stub_client",
                          { "anonymous-storage-FURL": furl,
                            "permutation-seed-base32": get_tubid_string(furl),
-                           })
+                           }, 0, "") # BOOG: empty nonce
         d.addCallback(_publish_stub_client)
         return d
 
@@ -217,10 +216,8 @@ class IntroducerClient(service.Service, Referenceable):
         ann_d.update(ann)
         return ann_d
 
-    def publish(self, service_name, ann, signing_key=None):
+    def publish(self, service_name, ann, current_seqnum, current_nonce, signing_key=None):
         # we increment the seqnum every time we publish something new
-        current_seqnum, current_nonce = self._sequencer()
-
         ann_d = self.create_announcement_dict(service_name, ann)
         self._outbound_announcements[service_name] = ann_d
 

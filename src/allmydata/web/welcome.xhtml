@@ -136,10 +136,9 @@
               <div class="span6">
                 <div>
                   <h3>
-                    <div><n:attr name="class">status-indicator connected-<n:invisible n:render="string" n:data="connected_to_introducer" /></n:attr></div>
+                    <div><n:attr name="class">status-indicator connected-<n:invisible n:render="string" n:data="connected_to_at_least_one_introducer" /></n:attr></div>
                     <div n:render="string" n:data="introducer_description" />
                   </h3>
-                  <div class="furl" n:render="string" n:data="introducer_furl_prefix" />
                 </div>
                 <div>
                   <h3>
@@ -188,9 +187,20 @@
             </tr>
             <tr n:pattern="empty"><td>You are not presently connected to any peers</td></tr>
           </table>
+          <div class="row-fluid">
+            <h2>Connected to <span n:render="string" n:data="connected_introducers" /> of <span n:render="string" n:data="total_introducers" /> introducers</h2>
+          </div>
+          <table class="table table-striped table-bordered peer-status" n:render="sequence" n:data="introducers">
+            <tr n:pattern="item" n:render="introducers_row">
+              <td class="nickname-and-peerid">
+                <div><n:attr name="class">status-indicator connected-<n:slot name="connected"/></n:attr></div>
+                <div class="furl"><n:slot name="introducer_furl"/></div>
+              </td>
+            </tr>
+            <tr n:pattern="empty"><td>no introducers!</td></tr>
+          </table>
         </div><!--/span-->
       </div><!--/row-->
-
       <hr/>
 
       <footer>
