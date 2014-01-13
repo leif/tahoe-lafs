@@ -203,7 +203,7 @@
                 <div class="furl"><n:slot name="introducer_furl"/></div>
               </td>
               <td class="service-since timestamp">
-                <n:slot name="since"/>
+                <a class="timestamp"><n:attr name="title"><n:slot name="status_since_abs_time"/></n:attr><n:slot name="status_since_rel_time"/></a>
               </td>
             </tr>
             <tr n:pattern="empty"><td>no introducers!</td></tr>

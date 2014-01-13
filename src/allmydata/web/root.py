@@ -244,11 +244,12 @@ class Root(rend.Page):
     def render_introducers_row(self, ctx, s):
         (furl, connected, since) = s
         status = ("no", "yes")
+        status_since_abs_time, status_since_rel_time = format_delta(since)
         ctx.fillSlots("introducer_furl", "%s" % (furl))
         ctx.fillSlots("connected-bool", "%s" % (connected))
         ctx.fillSlots("connected", "%s" % (status[int(connected)]))
-        ctx.fillSlots("since", "%s" % (time.strftime(TIME_FORMAT,
-                                             time.localtime(since))))
+        ctx.fillSlots("status_since_abs_time", "%s" % (status_since_abs_time))
+        ctx.fillSlots("status_since_rel_time", "%s" % (status_since_rel_time))
         return ctx.tag
 
     def data_helper_furl_prefix(self, ctx, data):
