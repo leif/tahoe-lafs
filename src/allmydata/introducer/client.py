@@ -74,6 +74,7 @@ class IntroducerClient(service.Service, Referenceable):
         self._canary = Referenceable()
 
         self._publisher = None
+        self._since = None
 
         self._local_subscribers = [] # (servicename,cb,args,kwargs) tuples
         self._subscribed_service_names = set()
@@ -137,6 +138,7 @@ class IntroducerClient(service.Service, Referenceable):
         if not (V1 in publisher.version or V2 in publisher.version):
             raise InsufficientVersionError("V1 or V2", publisher.version)
         self._publisher = publisher
+        self._since = int(time.time())
         publisher.notifyOnDisconnect(self._disconnected)
         self._maybe_publish()
         self._maybe_subscribe()
@@ -144,6 +146,7 @@ class IntroducerClient(service.Service, Referenceable):
     def _disconnected(self):
         self.log("bummer, we've lost our connection to the introducer")
         self._publisher = None
+        self._since = int(time.time())
         self._subscriptions.clear()
 
     def log(self, *args, **kwargs):
@@ -198,7 +201,7 @@ class IntroducerClient(service.Service, Referenceable):
             self.publish("stub_client",
                          { "anonymous-storage-FURL": furl,
                            "permutation-seed-base32": get_tubid_string(furl),
-                           }, 0, "") # BOOG: empty nonce
+                           }, 0, "")
         d.addCallback(_publish_stub_client)
         return d
 
@@ -356,3 +359,7 @@ class IntroducerClient(service.Service, Referenceable):
 
     def connected_to_introducer(self):
         return bool(self._publisher)
+
+    def get_since(self):
+        return self._since
+

@@ -207,7 +207,7 @@ class Root(rend.Page):
         return len(self.client.introducer_furls)
 
     def data_connected_introducers(self, ctx, data):
-        return self.client.connected_to_introducer().count(True)
+        return self.client.introducer_connection_statuses().count(True)
 
     def data_introducer_description(self, ctx, data):
         connected_count = self.data_connected_introducers( ctx, data )
@@ -219,13 +219,13 @@ class Root(rend.Page):
             return "%s introducers connected" % (connected_count,)
 
     def data_connected_to_at_least_one_introducer(self, ctx, data):
-        if True in self.client.connected_to_introducer():
+        if True in self.client.introducer_connection_statuses():
             return "yes"
         return "no"
 
     # In case we configure multiple introducers
     def data_introducers(self, ctx, data):
-        connection_status = self.client.connected_to_introducer()
+        connection_status = self.client.introducer_connection_statuses()
         s = []
         furls = self.client.introducer_furls
         for furl in furls:
@@ -236,16 +236,19 @@ class Root(rend.Page):
                 if swissnum != "introducer":
                     display_furl = "%s/[censored]" % (prefix,)
                 i = furls.index(furl)
-                s.append((display_furl, bool(connection_status[i])))
+                since = self.client.introducer_clients[i].get_since()
+                s.append((display_furl, bool(connection_status[i]), since))
         s.sort()
         return s
 
     def render_introducers_row(self, ctx, s):
-        (furl, connected) = s
+        (furl, connected, since) = s
         status = ("no", "yes")
         ctx.fillSlots("introducer_furl", "%s" % (furl))
         ctx.fillSlots("connected-bool", "%s" % (connected))
         ctx.fillSlots("connected", "%s" % (status[int(connected)]))
+        ctx.fillSlots("since", "%s" % (time.strftime(TIME_FORMAT,
+                                             time.localtime(since))))
         return ctx.tag
 
     def data_helper_furl_prefix(self, ctx, data):
