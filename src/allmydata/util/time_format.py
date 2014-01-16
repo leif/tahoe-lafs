@@ -81,8 +81,12 @@ def format_delta(time_1, time_2=None):
         minutes = (delta / 60) % 60
         delta  -= minutes * 60
         hours   = delta / (60*60)
-        relative_str = "%sh%sm%ss" % (hours, minutes, seconds)
+        if not hours:
+            if not minutes:
+                relative_str = "%ss" % (seconds)
+            else:
+                relative_str = "%sm%ss" % (minutes, seconds)
+        else:
+            relative_str = "%sh%sm%ss" % (hours, minutes, seconds)
         absolute_str = time.strftime(TIME_FORMAT, time.localtime(time_1))
     return absolute_str, relative_str
-
-
