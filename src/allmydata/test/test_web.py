@@ -43,7 +43,7 @@ from allmydata.introducer import IntroducerNode
 # create a fake uploader/downloader, and a couple of fake dirnodes, then
 # create a webserver that works against them
 
-timeout = 480 # Most of these take longer than 240 seconds on Francois's arm box.
+timeout = 960 # allmydata.test.test_web.Grid.test_deep_check took longer than 480 seconds on zomp
 
 unknown_rwcap = u"lafs://from_the_future_rw_\u263A".encode('utf-8')
 unknown_rocap = u"ro.lafs://readonly_from_the_future_ro_\u263A".encode('utf-8')
@@ -236,7 +236,7 @@ class FakeClient(Client):
         self.all_contents = {}
         self.nodeid = "fake_nodeid"
         self.nickname = u"fake_nickname \u263A"
-        self.introducer_furl = "None"
+        self.introducer_furls = []
         self.stats_provider = FakeStatsProvider()
         self._secret_holder = SecretHolder("lease secret", "convergence secret")
         self.helper = None
@@ -245,7 +245,7 @@ class FakeClient(Client):
         # fake knowledge of another server
         self.storage_broker.test_add_server("other_nodeid",
                                             FakeDisplayableServer("other_nodeid", u"other_nickname \u263B"))
-        self.introducer_client = None
+        self.introducer_clients = None
         self.history = FakeHistory()
         self.uploader = FakeUploader()
         self.uploader.all_contents = self.all_contents
@@ -641,40 +641,40 @@ class Web(WebMixin, WebErrorMixin, testutil.StallMixin, testutil.ReallyEqualMixi
 
         # introducer not connected, unguessable furl
         def _set_introducer_not_connected_unguessable(ign):
-            self.s.introducer_furl = "pb://someIntroducer/secret"
-            self.s.introducer_client = MockIntroducerClient(False)
+            self.s.introducer_furls = [ "pb://someIntroducer/secret" ]
+            self.s.introducer_clients = [ MockIntroducerClient(False) ]
             return self.GET("/")
         d.addCallback(_set_introducer_not_connected_unguessable)
         def _check_introducer_not_connected_unguessable(res):
             html = res.replace('\n', ' ')
             self.failUnlessIn('<div class="furl">pb://someIntroducer/[censored]</div>', html)
             self.failIfIn('pb://someIntroducer/secret', html)
-            self.failUnless(re.search('<div class="status-indicator connected-no"></div>[ ]*<div>Introducer not connected</div>', html), res)
+            self.failUnless(re.search('<div class="status-indicator connected-no"></div>[ ]*<div>No introducers connected</div>', html), res)
         d.addCallback(_check_introducer_not_connected_unguessable)
 
         # introducer connected, unguessable furl
         def _set_introducer_connected_unguessable(ign):
-            self.s.introducer_furl = "pb://someIntroducer/secret"
-            self.s.introducer_client = MockIntroducerClient(True)
+            self.s.introducer_furls = [ "pb://someIntroducer/secret" ]
+            self.s.introducer_clients = [ MockIntroducerClient(True) ]
             return self.GET("/")
         d.addCallback(_set_introducer_connected_unguessable)
         def _check_introducer_connected_unguessable(res):
             html = res.replace('\n', ' ')
             self.failUnlessIn('<div class="furl">pb://someIntroducer/[censored]</div>', html)
             self.failIfIn('pb://someIntroducer/secret', html)
-            self.failUnless(re.search('<div class="status-indicator connected-yes"></div>[ ]*<div>Introducer</div>', html), res)
+            self.failUnless(re.search('<div class="status-indicator connected-yes"></div>[ ]*<div>1 introducer connected</div>', html), res)
         d.addCallback(_check_introducer_connected_unguessable)
 
         # introducer connected, guessable furl
         def _set_introducer_connected_guessable(ign):
-            self.s.introducer_furl = "pb://someIntroducer/introducer"
-            self.s.introducer_client = MockIntroducerClient(True)
+            self.s.introducer_furls = [ "pb://someIntroducer/introducer" ]
+            self.s.introducer_clients = [ MockIntroducerClient(True) ]
             return self.GET("/")
         d.addCallback(_set_introducer_connected_guessable)
         def _check_introducer_connected_guessable(res):
             html = res.replace('\n', ' ')
             self.failUnlessIn('<div class="furl">pb://someIntroducer/introducer</div>', html)
-            self.failUnless(re.search('<div class="status-indicator connected-yes"></div>[ ]*<div>Introducer</div>', html), res)
+            self.failUnless(re.search('<div class="status-indicator connected-yes"></div>[ ]*<div>1 introducer connected</div>', html), res)
         d.addCallback(_check_introducer_connected_guessable)
         return d
 

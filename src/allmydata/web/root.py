@@ -203,26 +203,53 @@ class Root(rend.Page):
 
         return ctx.tag[ul]
 
-    def data_introducer_furl_prefix(self, ctx, data):
-        ifurl = self.client.introducer_furl
-        # trim off the secret swissnum
-        (prefix, _, swissnum) = ifurl.rpartition("/")
-        if not ifurl:
-            return None
-        if swissnum == "introducer":
-            return ifurl
-        else:
-            return "%s/[censored]" % (prefix,)
+    def data_total_introducers(self, ctx, data):
+        return len(self.client.introducer_furls)
+
+    def data_connected_introducers(self, ctx, data):
+        return self.client.introducer_connection_statuses().count(True)
 
     def data_introducer_description(self, ctx, data):
-        if self.data_connected_to_introducer(ctx, data) == "no":
-            return "Introducer not connected"
-        return "Introducer"
+        connected_count = self.data_connected_introducers( ctx, data )
+        if connected_count == 0:
+            return "No introducers connected"
+        elif connected_count == 1:
+            return "1 introducer connected"
+        else:
+            return "%s introducers connected" % (connected_count,)
 
-    def data_connected_to_introducer(self, ctx, data):
-        if self.client.connected_to_introducer():
+    def data_connected_to_at_least_one_introducer(self, ctx, data):
+        if True in self.client.introducer_connection_statuses():
             return "yes"
         return "no"
+
+    # In case we configure multiple introducers
+    def data_introducers(self, ctx, data):
+        connection_status = self.client.introducer_connection_statuses()
+        s = []
+        furls = self.client.introducer_furls
+        for furl in furls:
+            if connection_status:
+                display_furl = furl
+                # trim off the secret swissnum
+                (prefix, _, swissnum) = furl.rpartition("/")
+                if swissnum != "introducer":
+                    display_furl = "%s/[censored]" % (prefix,)
+                i = furls.index(furl)
+                since = self.client.introducer_clients[i].get_since()
+                s.append((display_furl, bool(connection_status[i]), since))
+        s.sort()
+        return s
+
+    def render_introducers_row(self, ctx, s):
+        (furl, connected, since) = s
+        status = ("no", "yes")
+        ctx.fillSlots("introducer_furl", "%s" % (furl))
+        ctx.fillSlots("connected-bool", "%s" % (connected))
+        ctx.fillSlots("connected", "%s" % (status[int(connected)]))
+        ctx.fillSlots("since", "%s" % (time.strftime(TIME_FORMAT,
+                                             time.localtime(since))))
+        return ctx.tag
 
     def data_helper_furl_prefix(self, ctx, data):
         try:
