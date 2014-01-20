@@ -93,11 +93,11 @@ def write_node_config(c, config):
     c.write("web.static = public_html\n")
     c.write("#tub.port =\n")
     c.write("#tub.location = \n")
-    incident_dir = os.path.join(config.get("logdir", ""), "incidents")
-    if incident_dir:
-        c.write("incident_dir = %s\n" % incident_dir)
+    incidents_dir = os.path.join(config.get("logdir", ""), "incidents")
+    if incidents_dir:
+        c.write("incidents_dir = %s\n" % incidents_dir)
     else:
-        c.write("#incident_dir =\n")
+        c.write("#incidents_dir =\n")
     tempdir = config.get("tempdir", "")
     if tempdir:
         c.write("tempdir = %s\n" % tempdir)
@@ -155,9 +155,9 @@ def create_node(config, out=sys.stdout, err=sys.stderr):
     c.write("reserved_space = 1G\n")
     storedir = config.get("storedir", "")
     if storedir:
-        c.write("storedir = %s\n" % storedir)
+        c.write("storage_dir = %s\n" % storedir)
     else:
-        c.write("#storedir =\n")
+        c.write("#storage_dir =\n")
     c.write("#expire.enabled =\n")
     c.write("#expire.mode =\n")
     c.write("\n")

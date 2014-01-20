@@ -157,19 +157,19 @@ class Basic(testutil.ReallyEqualMixin, unittest.TestCase):
                            BASECONFIG + \
                            "[storage]\n" + \
                            "enabled = true\n" + \
-                           "storedir = myowndir\n")
+                           "storage_dir = myowndir\n")
         c = client.Client(basedir)
         self.failUnlessEqual(c.getServiceNamed("storage").storedir,
                              os.path.join(os.getcwd(), basedir, "myowndir"))
 
     @mock.patch("foolscap.logging.log.setLogDir")
-    def test_log_dir(self, mock_setLogDir):
-        basedir = "client.Basic.test_log_dir"
+    def test_incidents_dir(self, mock_setLogDir):
+        basedir = "client.Basic.test_incidents_dir"
         os.mkdir(basedir)
         fileutil.write(os.path.join(basedir, "tahoe.cfg"), \
                            BASECONFIG + \
                            "[node]\n" + \
-                           "logdir = /myowndir\n")
+                           "incidents_dir = /myowndir/incidents\n")
 
         def call_setLogDir(logdir):
             self.failUnlessEqual(logdir, "/myowndir/incidents")
