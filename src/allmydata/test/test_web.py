@@ -28,7 +28,6 @@ from allmydata.util import fileutil, base32, hashutil
 from allmydata.util.consumer import download_to_data
 from allmydata.util.netstring import split_netstring
 from allmydata.util.encodingutil import to_str
-from allmydata.util.time_format import format_delta
 from allmydata.test.common import FakeCHKFileNode, FakeMutableFileNode, \
      create_chk_filenode, WebErrorMixin, ShouldFailMixin, \
      make_mutable_file_uri, create_mutable_filenode
@@ -5848,37 +5847,6 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
                                                        "Access Prohibited: dir-off-limits",
                                                        self.GET, self.child_url))
         return d
-
-
-    def test_format_delta(self):
-        time_1 = 1389812723
-        time_5s_delta = 1389812728
-        time_28m7s_delta = 1389814410
-        time_1h_delta = 1389816323
-
-        self.failUnlessReallyEqual(
-            format_delta(time_1, time_5s_delta),
-            ('20:05:23 15-Jan-2014', '5s'))
-        self.failUnlessReallyEqual(
-            format_delta(time_1, time_28m7s_delta),
-            ('20:05:23 15-Jan-2014', '28m7s'))
-        self.failUnlessReallyEqual(
-            format_delta(time_1, time_1h_delta),
-            ('20:05:23 15-Jan-2014', '1h0m0s'))
-
-        # time_1 with a decimal fraction will make the delta 1s less 
-        time_1decimal = 1389812723.383963
-
-        self.failUnlessReallyEqual(
-            format_delta(time_1decimal, time_5s_delta),
-            ('20:05:23 15-Jan-2014', '4s'))
-        self.failUnlessReallyEqual(
-            format_delta(time_1decimal, time_28m7s_delta),
-            ('20:05:23 15-Jan-2014', '28m6s'))
-        self.failUnlessReallyEqual(
-            format_delta(time_1decimal, time_1h_delta),
-            ('20:05:23 15-Jan-2014', '59m59s'))
-
 
 
 class CompletelyUnhandledError(Exception):
