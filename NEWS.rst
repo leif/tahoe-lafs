@@ -8,24 +8,26 @@ Truckee-LAFS
 ------------
 
 Truckee is near Tahoe. This branch includes changes which are not yet ready for
-inclusion upstream due to lack of review, tests, or other reasons. It also
-includes code to which contributors currently retain their copyright (as
-opposed to executing a copyright assignment contract with the Tahoe-LAFS
-Foundation; see `#1938`_ for details). This branch will not be rebased, and is
-expected to frequently have the official Tahoe-LAFS master merged.
+inclusion upstream due to lack of review, tests, or other reasons.
+
+This branch will not be rebased, and is expected to frequently have the
+official Tahoe-LAFS master merged.
 
 Current differences between Truckee and the Tahoe-LAFS upstream master:
 
-- `#467`_: There is a new configuration option called ``peers.preferred`` which
-  contains a list of storage server node IDs to move to the beginning of the
-  server selection list. See ``configuration.rst`` for more information.
-- `#648`_: The list of storage servers on the WUI's welcome page includes a new
-  "Space Available" column.
+- There is a new configuration option called ``peers.preferred`` which contains
+  a list of storage server node IDs to move to the beginning of the server
+  selection list. See ``configuration.rst`` for more information. (`#467`_)
+- The list of storage servers on the WUI's welcome page includes a new "Space
+  Available" column. (`#648`_)
 - Connection hints for storage servers are listed on the welcome page, in
   addition to the resolved IP address. This is useful for troubleshooting grids
   that use Tor hidden services.
-- `pull request #32`_ (tarcieri's redesigned directory listing page)
-- `#1953`_: include git branch name in the --version[-and-path] output
+- tarcieri's redesigned directory listing page (`pull request #32`_)
+- The "since" and "announced" columns have been replaced with more useful
+  values (`#1973`_)
+- patches form meskio and bertagaz to make the paths of various directories
+  configurable (`#2045`_)
 
 Truckee currently lives at https://github.com/leif/tahoe-lafs/commits/truckee
 
@@ -34,8 +36,8 @@ https://github.com/leif/tahoe-lafs/compare/master...truckee#files_bucket
 
 .. _#467: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/467
 .. _#648: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/648
-.. _#1938: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/1938
-.. _#1953: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/1953
+.. _#1973: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/1973
+.. _#2045: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/2045
 .. _pull request #32: https://github.com/tahoe-lafs/tahoe-lafs/pull/32 
 
 Release 1.10.0 (2013-05-01)
