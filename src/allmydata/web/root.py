@@ -225,31 +225,33 @@ class Root(rend.Page):
 
     # In case we configure multiple introducers
     def data_introducers(self, ctx, data):
-        connection_status = self.client.introducer_connection_statuses()
+        connection_statuses = self.client.introducer_connection_statuses()
         s = []
         furls = self.client.introducer_furls
         for furl in furls:
-            if connection_status:
+            if connection_statuses:
                 display_furl = furl
                 # trim off the secret swissnum
                 (prefix, _, swissnum) = furl.rpartition("/")
                 if swissnum != "introducer":
                     display_furl = "%s/[censored]" % (prefix,)
                 i = furls.index(furl)
-                since = self.client.introducer_clients[i].get_since()
-                s.append((display_furl, bool(connection_status[i]), since))
+                ic = self.client.introducer_clients[i]
+                s.append((display_furl, bool(connection_statuses[i]), ic))
         s.sort()
         return s
 
     def render_introducers_row(self, ctx, s):
-        (furl, connected, since) = s
+        (furl, connected, ic) = s
+        service_connection_status = ["Disconnected", "Connected"][connected]
+        service_connection_status_abs_time, service_connection_status_rel_time = format_delta(ic.get_since())
         status = ("no", "yes")
-        status_since_abs_time, status_since_rel_time = format_delta(since)
         ctx.fillSlots("introducer_furl", "%s" % (furl))
         ctx.fillSlots("connected-bool", "%s" % (connected))
+        ctx.fillSlots("service_connection_status", "%s" % (service_connection_status,))
         ctx.fillSlots("connected", "%s" % (status[int(connected)]))
-        ctx.fillSlots("status_since_abs_time", "%s" % (status_since_abs_time))
-        ctx.fillSlots("status_since_rel_time", "%s" % (status_since_rel_time))
+        ctx.fillSlots("service_connection_status_abs_time", service_connection_status_abs_time)
+        ctx.fillSlots("service_connection_status_rel_time", service_connection_status_rel_time)
         return ctx.tag
 
     def data_helper_furl_prefix(self, ctx, data):
