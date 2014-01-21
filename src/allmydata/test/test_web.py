@@ -172,21 +172,25 @@ class FakeHistory:
         return []
 
 class FakeDisplayableServer(StubServer):
-    def __init__(self, serverid, nickname):
+    def __init__(self, serverid, nickname, connected=True,
+                            last_lost_time=None, last_rx=None):
         StubServer.__init__(self, serverid)
         self.announcement = {"my-version": "allmydata-tahoe-fake",
                              "service-name": "storage",
                              "nickname": nickname}
+        self.connected = connected
+        self.last_lost_time = last_lost_time
+        self.last_rx = last_rx
     def is_connected(self):
-        return True
+        return self.connected
     def get_permutation_seed(self):
         return ""
     def get_remote_host(self):
         return ""
     def get_last_loss_time(self):
-        return None
+        return self.last_lost_time
     def get_last_received_data_time(self):
-        return None
+        return self.last_rx
     def get_announcement(self):
         return self.announcement
     def get_nickname(self):
@@ -240,7 +244,7 @@ class FakeClient(Client):
         self.storage_broker = StorageFarmBroker(None, permute_peers=True)
         # fake knowledge of another server
         self.storage_broker.test_add_server("other_nodeid",
-                                            FakeDisplayableServer("other_nodeid", u"other_nickname \u263B"))
+                                            FakeDisplayableServer("other_nodeid", u"other_nickname \u263B",))
         self.introducer_client = None
         self.history = FakeHistory()
         self.uploader = FakeUploader()
@@ -601,6 +605,7 @@ class WebMixin(object):
 
 
 class Web(WebMixin, WebErrorMixin, testutil.StallMixin, testutil.ReallyEqualMixin, unittest.TestCase):
+
     def test_create(self):
         pass
 
@@ -4395,6 +4400,24 @@ class Web(WebMixin, WebErrorMixin, testutil.StallMixin, testutil.ReallyEqualMixi
             self.failUnlessReallyEqual(res, "hello")
         d.addCallback(_check)
         return d
+    
+    def test_disconnected_server(self):
+        """
+        Ensure ...
+        """
+        # shouldn't we check that actually timestamp is correct?
+        last_rx = 1389812723
+        last_lost_time = 1389812723
+        self.s.storage_broker.test_add_server(
+            "disconnected_nodeid",
+            FakeDisplayableServer(
+                "disconnected_nodeid",
+                u"other_nickname \u263B",
+                False,
+                last_lost_time,
+                last_rx
+            )
+        )
 
 
 class IntroducerWeb(unittest.TestCase):
