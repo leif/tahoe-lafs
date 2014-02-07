@@ -16,6 +16,7 @@ official Tahoe-LAFS master merged.
 Current differences between Truckee and the Tahoe-LAFS upstream master:
 
 - Support for multiple introducers (`#68`_)
+- Support for introducerless operation (`#467`_)
 - There is a new configuration option called ``peers.preferred`` which contains
   a list of storage server node IDs to move to the beginning of the server
   selection list. See ``configuration.rst`` for more information. (`#467`_)
