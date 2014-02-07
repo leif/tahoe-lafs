@@ -424,6 +424,37 @@ Client Configuration
     location to prefer their local servers so that they can maintain access to
     all of their uploads without using the internet.
 
+Client Server Selection
+=======================
+
+``[client-server-selection]``
+
+This optional section allows you to specify storage servers to connect to
+without relying on an introducer. When you are using an introducer, you can
+copy and paste values for this section from the "Introducerless Config" page in
+the WUI.
+
+Note that in the following configuration options "serverid" is not
+literal but instead should be set to the appropriate serverid of a
+given node.
+
+``server.serverid.type = (type, mandatory)``
+
+    Right now only the 'tahoe-foolscap' storage server type is
+    supported.
+
+``server.serverid.nickname = (nickname, mandatory)``
+
+    Storage server nickname.
+
+``server.serverid.seed = (permutation-seed-base32, mandatory)``
+
+    Storage server permutation seed.
+
+``server.serverid.furl = (furl, mandatory)``
+
+    Storage server furl.
+
 
 Frontend Configuration
 ======================
