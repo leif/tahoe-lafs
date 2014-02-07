@@ -2814,3 +2814,7 @@ class InsufficientVersionError(Exception):
 
 class EmptyPathnameComponentError(Exception):
     """The webapi disallows empty pathname components."""
+
+class IntroducerlessConfigDisabledError(Exception):
+    pass
+
