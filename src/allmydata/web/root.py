@@ -12,8 +12,8 @@ import allmydata # to display import path
 from allmydata import get_package_versions_string
 from allmydata.util import log
 from allmydata.interfaces import IFileNode
-from allmydata.web import filenode, directory, unlinked, status, operations
-from allmydata.web import storage
+from allmydata.web import filenode, directory, unlinked, status, operations, \
+                                                storage, introducerless_config
 from allmydata.web.common import abbreviate_size, getxmlfile, WebError, \
      get_arg, RenderMixin, get_format, get_mutable_type, TIME_FORMAT
 from allmydata.util.time_format import format_delta
@@ -153,6 +153,7 @@ class Root(rend.Page):
         self.child_named = FileHandler(client)
         self.child_status = status.Status(client.get_history())
         self.child_statistics = status.Statistics(client.stats_provider)
+        self.child_introducerless_config = introducerless_config.IntroducerlessConfig(client)
         static_dir = resource_filename("allmydata.web", "static")
         for filen in os.listdir(static_dir):
             self.putChild(filen, nevow_File(os.path.join(static_dir, filen)))
@@ -203,26 +204,56 @@ class Root(rend.Page):
 
         return ctx.tag[ul]
 
-    def data_introducer_furl_prefix(self, ctx, data):
-        ifurl = self.client.introducer_furl
-        # trim off the secret swissnum
-        (prefix, _, swissnum) = ifurl.rpartition("/")
-        if not ifurl:
-            return None
-        if swissnum == "introducer":
-            return ifurl
-        else:
-            return "%s/[censored]" % (prefix,)
+    def data_total_introducers(self, ctx, data):
+        return len(self.client.introducer_furls)
+
+    def data_connected_introducers(self, ctx, data):
+        return self.client.introducer_connection_statuses().count(True)
 
     def data_introducer_description(self, ctx, data):
-        if self.data_connected_to_introducer(ctx, data) == "no":
-            return "Introducer not connected"
-        return "Introducer"
+        connected_count = self.data_connected_introducers( ctx, data )
+        if connected_count == 0:
+            return "No introducers connected"
+        elif connected_count == 1:
+            return "1 introducer connected"
+        else:
+            return "%s introducers connected" % (connected_count,)
 
-    def data_connected_to_introducer(self, ctx, data):
-        if self.client.connected_to_introducer():
+    def data_connected_to_at_least_one_introducer(self, ctx, data):
+        if True in self.client.introducer_connection_statuses():
             return "yes"
         return "no"
+
+    # In case we configure multiple introducers
+    def data_introducers(self, ctx, data):
+        connection_statuses = self.client.introducer_connection_statuses()
+        s = []
+        furls = self.client.introducer_furls
+        for furl in furls:
+            if connection_statuses:
+                display_furl = furl
+                # trim off the secret swissnum
+                (prefix, _, swissnum) = furl.rpartition("/")
+                if swissnum != "introducer":
+                    display_furl = "%s/[censored]" % (prefix,)
+                i = furls.index(furl)
+                ic = self.client.introducer_clients[i]
+                s.append((display_furl, bool(connection_statuses[i]), ic))
+        s.sort()
+        return s
+
+    def render_introducers_row(self, ctx, s):
+        (furl, connected, ic) = s
+        service_connection_status = ["Disconnected", "Connected"][connected]
+        service_connection_status_abs_time, service_connection_status_rel_time = format_delta(ic.get_since())
+        status = ("no", "yes")
+        ctx.fillSlots("introducer_furl", "%s" % (furl))
+        ctx.fillSlots("connected-bool", "%s" % (connected))
+        ctx.fillSlots("service_connection_status", "%s" % (service_connection_status,))
+        ctx.fillSlots("connected", "%s" % (status[int(connected)]))
+        ctx.fillSlots("service_connection_status_abs_time", service_connection_status_abs_time)
+        ctx.fillSlots("service_connection_status_rel_time", service_connection_status_rel_time)
+        return ctx.tag
 
     def data_helper_furl_prefix(self, ctx, data):
         try:
@@ -395,3 +426,11 @@ class Root(rend.Page):
             T.input(type="submit", value=u"Save \u00BB"),
             ]]
         return T.div[form]
+
+    def render_show_introducerless_config(self, ctx, data):
+        if self.client.get_config("node", "web.reveal_storage_furls", default=False, boolean=True):
+            return ctx.tag[T.a(href="introducerless_config")[
+                                                      "Introducerless Config"]]
+        else:
+            return ""
+

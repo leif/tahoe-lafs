@@ -15,6 +15,8 @@ official Tahoe-LAFS master merged.
 
 Current differences between Truckee and the Tahoe-LAFS upstream master:
 
+- Support for multiple introducers (`#68`_)
+- Support for introducerless operation (`#467`_)
 - There is a new configuration option called ``peers.preferred`` which contains
   a list of storage server node IDs to move to the beginning of the server
   selection list. See ``configuration.rst`` for more information. (`#467`_)
@@ -34,6 +36,7 @@ Truckee currently lives at https://github.com/leif/tahoe-lafs/commits/truckee
 This URL will display the full diff of truckee vs master:
 https://github.com/leif/tahoe-lafs/compare/master...truckee#files_bucket
 
+.. _#68: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/68
 .. _#467: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/467
 .. _#648: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/648
 .. _#1973: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/1973
