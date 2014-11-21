@@ -106,24 +106,25 @@ def get_linux_distro():
     if _distname and _version:
         return (_distname, _version)
 
-    try:
-        p = subprocess.Popen(["lsb_release", "--all"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        rc = p.wait()
-        if rc == 0:
-            for line in p.stdout.readlines():
-                m = _distributor_id_cmdline_re.search(line)
-                if m:
-                    _distname = m.group(1).strip()
-                    if _distname and _version:
-                        return (_distname, _version)
+    if os.path.isfile("/usr/bin/lsb_release") or os.path.isfile("/bin/lsb_release"):
+        try:
+            p = subprocess.Popen(["lsb_release", "--all"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            rc = p.wait()
+            if rc == 0:
+                for line in p.stdout.readlines():
+                    m = _distributor_id_cmdline_re.search(line)
+                    if m:
+                        _distname = m.group(1).strip()
+                        if _distname and _version:
+                            return (_distname, _version)
 
-                m = _release_cmdline_re.search(p.stdout.read())
-                if m:
-                    _version = m.group(1).strip()
-                    if _distname and _version:
-                        return (_distname, _version)
-    except EnvironmentError:
-        pass
+                    m = _release_cmdline_re.search(p.stdout.read())
+                    if m:
+                        _version = m.group(1).strip()
+                        if _distname and _version:
+                            return (_distname, _version)
+        except EnvironmentError:
+            pass
 
     if os.path.exists("/etc/arch-release"):
         return ("Arch_Linux", "")
@@ -155,7 +156,7 @@ def normalized_version(verstr, what=None):
 def get_package_versions_and_locations():
     import warnings
     from _auto_deps import package_imports, global_deprecation_messages, deprecation_messages, \
-        user_warning_messages, runtime_warning_messages, warning_imports
+        runtime_warning_messages, warning_imports
 
     def package_dir(srcfile):
         return os.path.dirname(os.path.dirname(os.path.normcase(os.path.realpath(srcfile))))
@@ -165,13 +166,13 @@ def get_package_versions_and_locations():
     # or any other bug that causes sys.path to be set up incorrectly. Therefore we
     # must import the packages in order to check their versions and paths.
 
-    # This is to suppress various DeprecationWarnings, UserWarnings, and RuntimeWarnings
+    # This is to suppress all UserWarnings and various DeprecationWarnings and RuntimeWarnings
     # (listed in _auto_deps.py).
+
+    warnings.filterwarnings("ignore", category=UserWarning, append=True)
 
     for msg in global_deprecation_messages + deprecation_messages:
         warnings.filterwarnings("ignore", category=DeprecationWarning, message=msg, append=True)
-    for msg in user_warning_messages:
-        warnings.filterwarnings("ignore", category=UserWarning, message=msg, append=True)
     for msg in runtime_warning_messages:
         warnings.filterwarnings("ignore", category=RuntimeWarning, message=msg, append=True)
     try:
@@ -181,8 +182,8 @@ def get_package_versions_and_locations():
             except ImportError:
                 pass
     finally:
-        # Leave suppressions for global_deprecation_messages active.
-        for ign in runtime_warning_messages + user_warning_messages + deprecation_messages:
+        # Leave suppressions for UserWarnings and global_deprecation_messages active.
+        for ign in runtime_warning_messages + deprecation_messages:
             warnings.filters.pop()
 
     packages = []
@@ -280,10 +281,10 @@ def cross_check_pkg_resources_versus_import():
 def cross_check(pkg_resources_vers_and_locs, imported_vers_and_locs_list):
     """This function returns a list of errors due to any failed cross-checks."""
 
+    from _auto_deps import not_import_versionable, ignorable
+
     errors = []
-    not_pkg_resourceable = set(['python', 'platform', __appname__.lower()])
-    not_import_versionable = set(['zope.interface', 'mock', 'pyasn1'])
-    ignorable = set(['argparse', 'pyutil', 'zbase32', 'distribute', 'twisted-web', 'twisted-core', 'twisted-conch'])
+    not_pkg_resourceable = ['python', 'platform', __appname__.lower()]
 
     for name, (imp_ver, imp_loc, imp_comment) in imported_vers_and_locs_list:
         name = name.lower()

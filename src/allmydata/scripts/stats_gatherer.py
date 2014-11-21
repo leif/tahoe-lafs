@@ -1,18 +1,12 @@
 
 import os, sys
-from allmydata.scripts.common import BasedirOptions
+from allmydata.scripts.common import NoDefaultBasedirOptions
 from allmydata.util.assertutil import precondition
 from allmydata.util.encodingutil import listdir_unicode, quote_output
 
-class CreateStatsGathererOptions(BasedirOptions):
-    default_nodedir = None
 
-    optParameters = [
-        ("pickledir", "p",  None, "Path where the statistics will be recorded."),
-        ]
-
-    def getSynopsis(self):
-        return "Usage:  %s [global-opts] create-stats-gatherer [options] NODEDIR" % (self.command_name,)
+class CreateStatsGathererOptions(NoDefaultBasedirOptions):
+    subcommand_name = "create-stats-gatherer"
 
 
 stats_gatherer_tac = """
