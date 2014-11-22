@@ -162,9 +162,7 @@ def start(config, out=sys.stdout, err=sys.stderr):
 def stop(config, out=sys.stdout, err=sys.stderr):
     basedir = config['basedir']
     print >>out, "STOPPING", quote_output(basedir)
-    pidfile = "twistd.pid"
-    if config["pidfile"]:
-        pidfile = config["pidfile"]
+    pidfile = config.get("pidfile", "twistd.pid")
     pidfile = os.path.join(basedir, pidfile)
     if not os.path.exists(pidfile):
         print >>err, "%s does not look like a running node directory (no twistd.pid)" % quote_output(basedir)
