@@ -13,28 +13,40 @@ inclusion upstream due to lack of review, tests, or other reasons.
 This branch will not be rebased, and is expected to frequently have the
 official Tahoe-LAFS master merged.
 
-Current differences between Truckee and the Tahoe-LAFS upstream master:
+Current differences between Truckee and the Tahoe-LAFS upstream master which
+don't have open pull requests:
 
 - Support for multiple introducers (`#68`_)
 - Support for introducerless operation (`#467`_)
-- There is a new configuration option called ``peers.preferred`` which contains
-  a list of storage server node IDs to move to the beginning of the server
-  selection list. See ``configuration.rst`` for more information. (`#467`_)
-- The list of storage servers on the WUI's welcome page includes a new "Space
-  Available" column. (`#648`_)
 - Connection hints for storage servers are listed on the welcome page, in
   addition to the resolved IP address. This is useful for troubleshooting grids
-  that use Tor hidden services.
-- tarcieri's redesigned directory listing page (`pull request #32`_)
+  that use Tor hidden services. There is no ticket for this, but the changes
+  can be found in the `show-locations`_ branch.
 - The "since" and "announced" columns have been replaced with more useful
   values (`#1973`_)
 - patches form meskio and bertagaz to make the paths of various directories
   configurable (`#2045`_)
 
+These are the patches in truckee which *do* have open pull requests upstream:
+
+- There is a new configuration option called ``peers.preferred`` which contains
+  a list of storage server node IDs to move to the beginning of the server
+  selection list. See ``configuration.rst`` for more information. (`#467`_)
+- The list of storage servers on the WUI's welcome page includes a new "Space
+  Available" column. (`#648`_)
+
+Patches that were in truckee but are now merged upstream:
+
+- tarcieri's redesigned directory listing page (`pull request #32`_)
+
 Truckee currently lives at https://github.com/leif/tahoe-lafs/commits/truckee
 
 This URL will display the full diff of truckee vs master:
 https://github.com/leif/tahoe-lafs/compare/master...truckee#files_bucket
+
+Because truckee is not rebased, there are many duplicate or near-duplicate
+commits in its history from merging and re-merging in-progress feature
+branches. Rebased feature branches should be findable via the linked tickets.
 
 .. _#68: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/68
 .. _#467: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/467
@@ -42,6 +54,7 @@ https://github.com/leif/tahoe-lafs/compare/master...truckee#files_bucket
 .. _#1973: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/1973
 .. _#2045: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/2045
 .. _pull request #32: https://github.com/tahoe-lafs/tahoe-lafs/pull/32 
+.. _show-locations: https://github.com/leif/tahoe-lafs/commits/show-locations
 
 Release 1.10.0 (2013-05-01)
 '''''''''''''''''''''''''''
