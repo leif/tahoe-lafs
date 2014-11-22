@@ -185,6 +185,7 @@ class NativeStorageServer:
           "maximum-mutable-share-size": 2*1000*1000*1000, # maximum prior to v1.9.2
           "tolerates-immutable-read-overrun": False,
           "delete-mutable-shares-with-zero-length-writev": False,
+          "available-space": None,
           },
         "application-version": "unknown: no get_version()",
         }
@@ -281,6 +282,16 @@ class NativeStorageServer:
             return None
         else:
             return self.rref.getDataLastReceivedAt()
+
+    def get_available_space(self):
+        version = self.get_version()
+        if version is None:
+            return None
+        protocol_v1_version = version.get('http://allmydata.org/tahoe/protocols/storage/v1', {})
+        available_space = protocol_v1_version.get('available-space')
+        if available_space is None:
+            available_space = protocol_v1_version.get('maximum-immutable-share-size', None)
+        return available_space
 
     def start_connecting(self, tub, trigger_cb):
         furl = self.get_storage_furl()
