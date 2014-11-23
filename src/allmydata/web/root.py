@@ -133,12 +133,15 @@ class Root(rend.Page):
     addSlash = True
     docFactory = getxmlfile("welcome.xhtml")
 
-    def __init__(self, client, clock=None):
+    def __init__(self, client, clock=None, now=None):
         rend.Page.__init__(self, client)
         self.client = client
         # If set, clock is a twisted.internet.task.Clock that the tests
         # use to test ophandle expiration.
         self.child_operations = operations.OphandleTable(clock)
+        self.now = now
+        if self.now is None:
+            self.now = time.time
         try:
             s = client.getServiceNamed("storage")
         except KeyError:
@@ -271,7 +274,7 @@ class Root(rend.Page):
         ctx.fillSlots("peerid", server.get_longname())
         ctx.fillSlots("nickname", server.get_nickname())
         rhost = server.get_remote_host()
-        if rhost:
+        if server.is_connected():
             if nodeid == self.client.nodeid:
                 rhost_s = "(loopback)"
             elif isinstance(rhost, address.IPv4Address):
@@ -280,13 +283,13 @@ class Root(rend.Page):
                 rhost_s = str(rhost)
             addr = rhost_s
             service_connection_status = "Connected"
-            service_connection_status_abs_time, service_connection_status_rel_time = format_delta(server.get_last_connect_time())
+            service_connection_status_abs_time, service_connection_status_rel_time = format_delta(server.get_last_connect_time(), self.now())
         else:
             addr = "N/A"
             service_connection_status = "Disconnected"
-            service_connection_status_abs_time, service_connection_status_rel_time = format_delta(server.get_last_loss_time())
+            service_connection_status_abs_time, service_connection_status_rel_time = format_delta(server.get_last_loss_time(), self.now())
 
-        last_received_data_abs_time, last_received_data_rel_time = format_delta(server.get_last_received_data_time())
+        last_received_data_abs_time, last_received_data_rel_time = format_delta(server.get_last_received_data_time(), self.now())
 
         announcement = server.get_announcement()
         version = announcement["my-version"]
