@@ -1,4 +1,4 @@
-import os, shutil, sys, urllib, time, stat
+import os, shutil, sys, urllib, time, stat, urlparse
 from cStringIO import StringIO
 from twisted.internet import defer, reactor, protocol, error
 from twisted.application import service, internet
@@ -49,10 +49,14 @@ def discardPage(url, stall=False, *args, **kwargs):
     # adapted from twisted.web.client.getPage . We can't just wrap or
     # subclass because it provides no way to override the HTTPClientFactory
     # that it creates.
-    scheme, host, port, path = tw_client._parse(url)
+    scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
+    assert scheme == 'http'
+    host, port = netloc, 80
+    if ":" in host:
+        host, port = host.split(":")
+        port = int(port)
     factory = StallableDiscardingHTTPClientFactory(url, *args, **kwargs)
     factory.do_stall = stall
-    assert scheme == 'http'
     reactor.connectTCP(host, port, factory)
     return factory.deferred
 
@@ -145,7 +149,7 @@ class SystemFramework(pollmixin.PollMixin):
 
     def tearDown(self, passthrough):
         # the client node will shut down in a few seconds
-        #os.remove(os.path.join(self.clientdir, "suicide_prevention_hotline"))
+        #os.remove(os.path.join(self.clientdir, client.Client.EXIT_TRIGGER_FILE))
         log.msg("shutting down SystemTest services")
         if self.keepalive_file and os.path.exists(self.keepalive_file):
             age = time.time() - os.stat(self.keepalive_file)[stat.ST_MTIME]
@@ -255,7 +259,7 @@ this file are ignored.
             pass
         f.close()
         self.keepalive_file = os.path.join(clientdir,
-                                           "suicide_prevention_hotline")
+                                           client.Client.EXIT_TRIGGER_FILE)
         # now start updating the mtime.
         self.touch_keepalive()
         ts = internet.TimerService(1.0, self.touch_keepalive)

@@ -1,6 +1,8 @@
 *.pyc
 *.pyo
 *~
+*.DS_Store
+.*.kate-swp
 
 /build/
 /support/
@@ -18,9 +20,11 @@
 /src/allmydata_tahoe.egg-info/
 Twisted-*.egg
 zope.interface-*.egg
+.pc
 
 /_trial_temp*
 /tmp*
+/*.patch
 /dist/
 /twisted/plugins/dropin.cache
 /tahoe-deps/

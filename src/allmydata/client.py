@@ -109,13 +109,13 @@ class Client(node.Node, pollmixin.PollMixin):
     PORTNUMFILE = "client.port"
     STOREDIR = 'storage'
     NODETYPE = "client"
-    SUICIDE_PREVENTION_HOTLINE_FILE = "suicide_prevention_hotline"
+    EXIT_TRIGGER_FILE = "exit_trigger"
 
     # This means that if a storage server treats me as though I were a
     # 1.0.0 storage client, it will work as they expect.
     OLDEST_SUPPORTED_VERSION = "1.0.0"
 
-    # this is a tuple of (needed, desired, total, max_segment_size). 'needed'
+    # This is a dictionary of (needed, desired, total, max_segment_size). 'needed'
     # is the number of shares required to reconstruct a file. 'desired' means
     # that we will abort an upload unless we can allocate space for at least
     # this many. 'total' is the total number of shares created by encoding.
@@ -130,7 +130,7 @@ class Client(node.Node, pollmixin.PollMixin):
         node.Node.__init__(self, basedir)
         self.started_timestamp = time.time()
         self.logSource="Client"
-        self.DEFAULT_ENCODING_PARAMETERS = self.DEFAULT_ENCODING_PARAMETERS.copy()
+        self.encoding_params = self.DEFAULT_ENCODING_PARAMETERS.copy()
         self.init_introducer_client()
         self.init_stats_provider()
         self.init_secrets()
@@ -150,13 +150,16 @@ class Client(node.Node, pollmixin.PollMixin):
         self.init_sftp_server()
         self.init_drop_uploader()
 
-        hotline_file = os.path.join(self.basedir,
-                                    self.SUICIDE_PREVENTION_HOTLINE_FILE)
-        if os.path.exists(hotline_file):
-            age = time.time() - os.stat(hotline_file)[stat.ST_MTIME]
-            self.log("hotline file noticed (%ds old), starting timer" % age)
-            hotline = TimerService(1.0, self._check_hotline, hotline_file)
-            hotline.setServiceParent(self)
+        # If the node sees an exit_trigger file, it will poll every second to see
+        # whether the file still exists, and what its mtime is. If the file does not
+        # exist or has not been modified for a given timeout, the node will exit.
+        exit_trigger_file = os.path.join(self.basedir,
+                                         self.EXIT_TRIGGER_FILE)
+        if os.path.exists(exit_trigger_file):
+            age = time.time() - os.stat(exit_trigger_file)[stat.ST_MTIME]
+            self.log("%s file noticed (%ds old), starting timer" % (self.EXIT_TRIGGER_FILE, age))
+            exit_trigger = TimerService(1.0, self._check_exit_trigger, exit_trigger_file)
+            exit_trigger.setServiceParent(self)
 
         # this needs to happen last, so it can use getServiceNamed() to
         # acquire references to StorageServer and other web-statusable things
@@ -322,7 +325,7 @@ class Client(node.Node, pollmixin.PollMixin):
         if helper_furl in ("None", ""):
             helper_furl = None
 
-        DEP = self.DEFAULT_ENCODING_PARAMETERS
+        DEP = self.encoding_params
         DEP["k"] = int(self.get_config("client", "shares.needed", DEP["k"]))
         DEP["n"] = int(self.get_config("client", "shares.total", DEP["n"]))
         DEP["happy"] = int(self.get_config("client", "shares.happy", DEP["happy"]))
@@ -492,19 +495,19 @@ class Client(node.Node, pollmixin.PollMixin):
             except Exception, e:
                 self.log("couldn't start drop-uploader: %r", args=(e,))
 
-    def _check_hotline(self, hotline_file):
-        if os.path.exists(hotline_file):
-            mtime = os.stat(hotline_file)[stat.ST_MTIME]
+    def _check_exit_trigger(self, exit_trigger_file):
+        if os.path.exists(exit_trigger_file):
+            mtime = os.stat(exit_trigger_file)[stat.ST_MTIME]
             if mtime > time.time() - 120.0:
                 return
             else:
-                self.log("hotline file too old, shutting down")
+                self.log("%s file too old, shutting down" % (self.EXIT_TRIGGER_FILE,))
         else:
-            self.log("hotline file missing, shutting down")
+            self.log("%s file missing, shutting down" % (self.EXIT_TRIGGER_FILE,))
         reactor.stop()
 
     def get_encoding_parameters(self):
-        return self.DEFAULT_ENCODING_PARAMETERS
+        return self.encoding_params
 
     def connected_to_introducer(self):
         if self.introducer_client:

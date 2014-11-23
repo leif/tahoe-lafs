@@ -519,7 +519,8 @@ class FileUtil(unittest.TestCase):
 
         disk = fileutil.get_disk_stats('.', 2**13)
         self.failUnless(disk['total'] > 0, disk['total'])
-        self.failUnless(disk['used'] > 0, disk['used'])
+        # we tolerate used==0 for a Travis-CI bug, see #2290
+        self.failUnless(disk['used'] >= 0, disk['used'])
         self.failUnless(disk['free_for_root'] > 0, disk['free_for_root'])
         self.failUnless(disk['free_for_nonroot'] > 0, disk['free_for_nonroot'])
         self.failUnless(disk['avail'] > 0, disk['avail'])
@@ -659,11 +660,11 @@ class HashUtilTests(unittest.TestCase):
         h2.update("foo")
         self.failUnlessEqual(h1, h2.digest())
 
-    def test_constant_time_compare(self):
-        self.failUnless(hashutil.constant_time_compare("a", "a"))
-        self.failUnless(hashutil.constant_time_compare("ab", "ab"))
-        self.failIf(hashutil.constant_time_compare("a", "b"))
-        self.failIf(hashutil.constant_time_compare("a", "aa"))
+    def test_timing_safe_compare(self):
+        self.failUnless(hashutil.timing_safe_compare("a", "a"))
+        self.failUnless(hashutil.timing_safe_compare("ab", "ab"))
+        self.failIf(hashutil.timing_safe_compare("a", "b"))
+        self.failIf(hashutil.timing_safe_compare("a", "aa"))
 
     def _testknown(self, hashf, expected_a, *args):
         got = hashf(*args)

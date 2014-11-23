@@ -50,7 +50,7 @@ unknown_rocap = u"ro.lafs://readonly_from_the_future_ro_\u263A".encode('utf-8')
 unknown_immcap = u"imm.lafs://immutable_from_the_future_imm_\u263A".encode('utf-8')
 
 FAVICON_MARKUP = '<link href="/icon.png" rel="shortcut icon" />'
-
+DIR_HTML_TAG = '<html lang="en">'
 
 class FakeStatsProvider:
     def get_stats(self):
@@ -1527,7 +1527,7 @@ class Web(WebMixin, WebErrorMixin, testutil.StallMixin, testutil.ReallyEqualMixi
     def test_GET_DIRECTORY_html(self):
         d = self.GET(self.public_url + "/foo", followRedirect=True)
         def _check(html):
-            self.failUnlessIn('<div class="toolbar-item"><a href="../../..">Return to Welcome page</a></div>', html)
+            self.failUnlessIn('<li class="toolbar-item"><a href="../../..">Return to Welcome page</a></li>', html)
             self._check_upload_and_mkdir_forms(html)
             self.failUnlessIn("quux", html)
         d.addCallback(_check)
@@ -1621,7 +1621,7 @@ class Web(WebMixin, WebErrorMixin, testutil.StallMixin, testutil.ReallyEqualMixi
         d.addCallback(lambda res: self.GET(self.public_url + "/foo/empty/"))
         def _check4(res):
             self.failUnlessIn("directory is empty", res)
-            MKDIR_BUTTON_RE=re.compile('<input type="hidden" name="t" value="mkdir" />.*<legend class="freeform-form-label">Create a new directory in this directory</legend>.*<input type="submit" value="Create" />', re.I)
+            MKDIR_BUTTON_RE=re.compile('<input type="hidden" name="t" value="mkdir" />.*<legend class="freeform-form-label">Create a new directory in this directory</legend>.*<input type="submit" class="btn" value="Create" />', re.I)
             self.failUnless(MKDIR_BUTTON_RE.search(res), res)
         d.addCallback(_check4)
 
@@ -4603,7 +4603,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             r = simplejson.loads(res)
             self.failUnlessEqual(r["summary"], "Healthy")
             self.failUnless(r["results"]["healthy"])
-            self.failIf(r["results"]["needs-rebalancing"])
+            self.failIfIn("needs-rebalancing", r["results"])
             self.failUnless(r["results"]["recoverable"])
         d.addCallback(_got_json_good)
 
@@ -4647,8 +4647,8 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             self.failUnlessEqual(r["summary"],
                                  "Not Healthy: 9 shares (enc 3-of-10)")
             self.failIf(r["results"]["healthy"])
-            self.failIf(r["results"]["needs-rebalancing"])
             self.failUnless(r["results"]["recoverable"])
+            self.failIfIn("needs-rebalancing", r["results"])
         d.addCallback(_got_json_sick)
 
         d.addCallback(self.CHECK, "dead", "t=check")
@@ -4661,8 +4661,8 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             self.failUnlessEqual(r["summary"],
                                  "Not Healthy: 1 shares (enc 3-of-10)")
             self.failIf(r["results"]["healthy"])
-            self.failIf(r["results"]["needs-rebalancing"])
             self.failIf(r["results"]["recoverable"])
+            self.failIfIn("needs-rebalancing", r["results"])
         d.addCallback(_got_json_dead)
 
         d.addCallback(self.CHECK, "corrupt", "t=check&verify=true")
@@ -4675,6 +4675,8 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             self.failUnlessIn("Unhealthy: 9 shares (enc 3-of-10)", r["summary"])
             self.failIf(r["results"]["healthy"])
             self.failUnless(r["results"]["recoverable"])
+            self.failIfIn("needs-rebalancing", r["results"])
+            self.failUnlessReallyEqual(r["results"]["count-happiness"], 9)
             self.failUnlessReallyEqual(r["results"]["count-shares-good"], 9)
             self.failUnlessReallyEqual(r["results"]["count-corrupt-shares"], 1)
         d.addCallback(_got_json_corrupt)
@@ -5123,12 +5125,14 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             self.failUnlessEqual(u0["type"], "directory")
             self.failUnlessReallyEqual(to_str(u0["cap"]), self.rootnode.get_uri())
             u0cr = u0["check-results"]
+            self.failUnlessReallyEqual(u0cr["results"]["count-happiness"], 10)
             self.failUnlessReallyEqual(u0cr["results"]["count-shares-good"], 10)
 
             ugood = [u for u in units
                      if u["type"] == "file" and u["path"] == [u"good"]][0]
             self.failUnlessReallyEqual(to_str(ugood["cap"]), self.uris["good"])
             ugoodcr = ugood["check-results"]
+            self.failUnlessReallyEqual(ugoodcr["results"]["count-happiness"], 10)
             self.failUnlessReallyEqual(ugoodcr["results"]["count-shares-good"], 10)
 
             stats = units[-1]
@@ -5227,6 +5231,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             self.failUnlessEqual(last_unit["path"], ["subdir"])
             r = last_unit["check-results"]["results"]
             self.failUnlessReallyEqual(r["count-recoverable-versions"], 0)
+            self.failUnlessReallyEqual(r["count-happiness"], 1)
             self.failUnlessReallyEqual(r["count-shares-good"], 1)
             self.failUnlessReallyEqual(r["recoverable"], False)
         d.addCallback(_check_broken_deepcheck)
@@ -5304,6 +5309,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             self.failUnlessReallyEqual(to_str(u0["cap"]), self.rootnode.get_uri())
             u0crr = u0["check-and-repair-results"]
             self.failUnlessReallyEqual(u0crr["repair-attempted"], False)
+            self.failUnlessReallyEqual(u0crr["pre-repair-results"]["results"]["count-happiness"], 10)
             self.failUnlessReallyEqual(u0crr["pre-repair-results"]["results"]["count-shares-good"], 10)
 
             ugood = [u for u in units
@@ -5311,6 +5317,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             self.failUnlessEqual(to_str(ugood["cap"]), self.uris["good"])
             ugoodcrr = ugood["check-and-repair-results"]
             self.failUnlessReallyEqual(ugoodcrr["repair-attempted"], False)
+            self.failUnlessReallyEqual(ugoodcrr["pre-repair-results"]["results"]["count-happiness"], 10)
             self.failUnlessReallyEqual(ugoodcrr["pre-repair-results"]["results"]["count-shares-good"], 10)
 
             usick = [u for u in units
@@ -5319,7 +5326,9 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             usickcrr = usick["check-and-repair-results"]
             self.failUnlessReallyEqual(usickcrr["repair-attempted"], True)
             self.failUnlessReallyEqual(usickcrr["repair-successful"], True)
+            self.failUnlessReallyEqual(usickcrr["pre-repair-results"]["results"]["count-happiness"], 9)
             self.failUnlessReallyEqual(usickcrr["pre-repair-results"]["results"]["count-shares-good"], 9)
+            self.failUnlessReallyEqual(usickcrr["post-repair-results"]["results"]["count-happiness"], 10)
             self.failUnlessReallyEqual(usickcrr["post-repair-results"]["results"]["count-shares-good"], 10)
 
             stats = units[-1]
@@ -5515,7 +5524,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
         self.basedir = "web/Grid/exceptions"
         self.set_up_grid(num_clients=1, num_servers=2)
         c0 = self.g.clients[0]
-        c0.DEFAULT_ENCODING_PARAMETERS['happy'] = 2
+        c0.encoding_params['happy'] = 2
         self.fileurls = {}
         DATA = "data" * 100
         d = c0.create_dirnode()
@@ -5604,7 +5613,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
 
         d.addCallback(lambda ignored: self.GET(self.fileurls["dir-0share"]))
         def _check_0shares_dir_html(body):
-            self.failUnlessIn("<html>", body)
+            self.failUnlessIn(DIR_HTML_TAG, body)
             # we should see the regular page, but without the child table or
             # the dirops forms
             body = " ".join(body.strip().split())
@@ -5627,7 +5636,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             # and some-shares like we did for immutable files (since there
             # are different sorts of advice to offer in each case). For now,
             # they present the same way.
-            self.failUnlessIn("<html>", body)
+            self.failUnlessIn(DIR_HTML_TAG, body)
             body = " ".join(body.strip().split())
             self.failUnlessIn('href="?t=info">More info on this directory',
                               body)
@@ -5754,7 +5763,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
         d.addCallback(_stash_dir)
         d.addCallback(lambda ign: self.GET(self.dir_url, followRedirect=True))
         def _check_dir_html(body):
-            self.failUnlessIn("<html>", body)
+            self.failUnlessIn(DIR_HTML_TAG, body)
             self.failUnlessIn("blacklisted.txt</a>", body)
         d.addCallback(_check_dir_html)
         d.addCallback(lambda ign: self.GET(self.url))
@@ -5778,7 +5787,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
         # We should still be able to list the parent directory, in HTML...
         d.addCallback(lambda ign: self.GET(self.dir_url, followRedirect=True))
         def _check_dir_html2(body):
-            self.failUnlessIn("<html>", body)
+            self.failUnlessIn(DIR_HTML_TAG, body)
             self.failUnlessIn("blacklisted.txt</strike>", body)
         d.addCallback(_check_dir_html2)
 
@@ -5829,7 +5838,7 @@ class Grid(GridTestMixin, WebErrorMixin, ShouldFailMixin, testutil.ReallyEqualMi
             self.child_url = "uri/"+dn.get_readonly_uri()+"/child"
         d.addCallback(_get_dircap)
         d.addCallback(lambda ign: self.GET(self.dir_url_base, followRedirect=True))
-        d.addCallback(lambda body: self.failUnlessIn("<html>", body))
+        d.addCallback(lambda body: self.failUnlessIn(DIR_HTML_TAG, body))
         d.addCallback(lambda ign: self.GET(self.dir_url_json1))
         d.addCallback(lambda res: simplejson.loads(res))  # just check it decodes
         d.addCallback(lambda ign: self.GET(self.dir_url_json2))

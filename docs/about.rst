@@ -1,6 +1,4 @@
-﻿
-
-.. -*- coding: utf-8 -*-
+﻿.. -*- coding: utf-8-with-signature -*-
 
 Welcome to Tahoe-LAFS!
 ======================
@@ -22,7 +20,7 @@ misconfigurations, or operator error can accidentally expose your data to
 another customer or to the public, or can corrupt your data.  Criminals
 routinely gain illicit access to corporate servers.  Even more insidious is
 the fact that the employees themselves sometimes violate customer privacy out
-of carelessness, avarice, or mere curiousity.  The most conscientious of
+of carelessness, avarice, or mere curiosity.  The most conscientious of
 these service providers spend considerable effort and expense trying to
 mitigate these risks.
 
@@ -46,8 +44,13 @@ Here's how it works:
 
 A "storage grid" is made up of a number of storage servers.  A storage server
 has direct attached storage (typically one or more hard disks).  A "gateway"
-uses the storage servers and provides access to the filesystem over HTTP(S)
-or (S)FTP.
+communicates with storage nodes, and uses them to provide access to the
+filesystem over protocols such as HTTP(S), SFTP or FTP.
+
+Note that you can find "client" used to refer to gateway nodes (which act as
+a client to storage servers), and also to processes or programs connecting to
+a gateway node and performing operations on the grid -- for example, a CLI
+command, Web browser, SFTP client, or FTP client.
 
 Users do not rely on storage servers to provide *confidentiality* nor
 *integrity* for their data -- instead all of the data is encrypted and
@@ -109,22 +112,6 @@ To use Tahoe-LAFS, please see quickstart.rst_.
 License
 =======
 
-Copyright 2006-2012 The Tahoe-LAFS Software Foundation
+Tahoe-LAFS is an open-source project; please see README.rst_ for details.
 
-You may use this package under the GNU General Public License, version 2 or,
-at your option, any later version.  See the file COPYING.GPL_ for the terms
-of the GNU General Public License, version 2.
-
-You may use this package under the Transitive Grace Period Public Licence,
-version 1 or, at your option, any later version.  The Transitive Grace Period
-Public Licence has requirements similar to the GPL except that it allows you
-to wait for up to twelve months after you redistribute a derived work before
-releasing the source code of your derived work. See the file
-COPYING.TGPPL.rst_ for the terms of the Transitive Grace Period Public
-Licence, version 1.
-
-(You may choose to use this package under the terms of either licence, at
-your option.)
-
-.. _COPYING.GPL: ../COPYING.GPL
-.. _COPYING.TGPPL.rst: ../COPYING.TGPPL.rst
+.. _README.rst: ../README.rst

@@ -10,7 +10,7 @@ import sys; assert sys.version_info < (3,), ur"Tahoe-LAFS does not run under Pyt
 #
 # See the docs/about.rst file for licensing information.
 
-import glob, os, stat, subprocess, re
+import os, stat, subprocess, re
 
 ##### sys.path management
 
@@ -37,7 +37,8 @@ def read_version_py(infname):
         if mo:
             return mo.group(1)
 
-version = read_version_py("src/allmydata/_version.py")
+VERSION_PY_FILENAME = 'src/allmydata/_version.py'
+version = read_version_py(VERSION_PY_FILENAME)
 
 APPNAME='allmydata-tahoe'
 APPNAMEFILE = os.path.join('src', 'allmydata', '_appname.py')
@@ -70,7 +71,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '--fakedependency':
 
 __requires__ = install_requires[:]
 
-egg = os.path.realpath(glob.glob('setuptools-*.egg')[0])
+egg = os.path.realpath('setuptools-0.6c16dev5.egg')
 sys.path.insert(0, egg)
 import setuptools; setuptools.bootstrap_install_from = egg
 
@@ -90,7 +91,6 @@ trove_classifiers=[
     "Intended Audience :: System Administrators",
     "Operating System :: Microsoft",
     "Operating System :: Microsoft :: Windows",
-    "Operating System :: Microsoft :: Windows :: Windows NT/2000",
     "Operating System :: Unix",
     "Operating System :: POSIX :: Linux",
     "Operating System :: POSIX",
@@ -100,8 +100,6 @@ trove_classifiers=[
     "Programming Language :: C",
     "Programming Language :: Python",
     "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 2.4",
-    "Programming Language :: Python :: 2.5",
     "Programming Language :: Python :: 2.6",
     "Programming Language :: Python :: 2.7",
     "Topic :: Utilities",
@@ -109,7 +107,6 @@ trove_classifiers=[
     "Topic :: System :: Filesystems",
     "Topic :: System :: Distributed Computing",
     "Topic :: Software Development :: Libraries",
-    "Topic :: Communications :: Usenet News",
     "Topic :: System :: Archiving :: Backup",
     "Topic :: System :: Archiving :: Mirroring",
     "Topic :: System :: Archiving",
@@ -133,17 +130,6 @@ setup_requires = []
 # https://bugs.launchpad.net/nevow/+bug/812537 has been fixed.
 setup_requires += [req for req in install_requires if req.startswith('Twisted') or req.startswith('zope.interface')]
 
-# trialcoverage is required if you want the "trial" unit test runner to have a
-# "--reporter=bwverbose-coverage" option which produces code-coverage results.
-# The required version is 0.3.3, because that is the latest version that only
-# depends on a version of pycoverage for which binary packages are available.
-if "--reporter=bwverbose-coverage" in sys.argv:
-    setup_requires.append('trialcoverage >= 0.3.3')
-
-# stdeb is required to produce Debian files with the "sdist_dsc" command.
-if "sdist_dsc" in sys.argv:
-    setup_requires.append('stdeb >= 0.3')
-
 # We no longer have any requirements specific to tests.
 tests_require=[]
 
@@ -157,6 +143,7 @@ class Trial(Command):
                      ("reporter=", None, "The reporter to use for this test run."),
                      ("suite=", "s", "Specify the test suite."),
                      ("quiet", None, "Don't display version numbers and paths of Tahoe dependencies."),
+                     ("coverage", "c", "Collect branch coverage information."),
                    ]
 
     def initialize_options(self):
@@ -166,12 +153,35 @@ class Trial(Command):
         self.reporter = None
         self.suite = "allmydata"
         self.quiet = False
+        self.coverage = False
 
     def finalize_options(self):
         pass
 
     def run(self):
         args = [sys.executable, os.path.join('bin', 'tahoe')]
+
+        if self.coverage:
+            from errno import ENOENT
+            coverage_cmd = 'coverage'
+            try:
+                subprocess.call([coverage_cmd, 'help'])
+            except OSError as e:
+                if e.errno != ENOENT:
+                    raise
+                coverage_cmd = 'python-coverage'
+                try:
+                    rc = subprocess.call([coverage_cmd, 'help'])
+                except OSError as e:
+                    if e.errno != ENOENT:
+                        raise
+                    print >>sys.stderr
+                    print >>sys.stderr, "Couldn't find the command 'coverage' nor 'python-coverage'."
+                    print >>sys.stderr, "coverage can be installed using 'pip install coverage', or on Debian-based systems, 'apt-get install python-coverage'."
+                    sys.exit(1)
+
+            args += ['@' + coverage_cmd, 'run', '--branch', '--source=src/allmydata', '@tahoe']
+
         if not self.quiet:
             args.append('--version-and-path')
         args += ['debug', 'trial']
@@ -251,25 +261,23 @@ verstr = %(normalized)r
 __version__ = verstr
 '''
 
-def run_command(args, cwd=None, verbose=False):
+def run_command(args, cwd=None):
     try:
         # remember shell=False, so use git.cmd on windows, not just git
         p = subprocess.Popen(args, stdout=subprocess.PIPE, cwd=cwd)
     except EnvironmentError as e:  # if this gives a SyntaxError, note that Tahoe-LAFS requires Python 2.6+
-        if verbose:
-            print("unable to run %s" % args[0])
-            print(e)
+        print("Warning: unable to run %r." % (" ".join(args),))
+        print(e)
         return None
     stdout = p.communicate()[0].strip()
     if p.returncode != 0:
-        if verbose:
-            print("unable to run %s (error)" % args[0])
+        print("Warning: %r returned error code %r." % (" ".join(args), p.returncode))
         return None
     return stdout
 
 
-def versions_from_git(tag_prefix, verbose=False):
-    # this runs 'git' from the directory that contains this file. That either
+def versions_from_git(tag_prefix):
+    # This runs 'git' from the directory that contains this file. That either
     # means someone ran a setup.py command (and this code is in
     # versioneer.py, thus the containing directory is the root of the source
     # tree), or someone ran a project-specific entry point (and this code is
@@ -290,19 +298,21 @@ def versions_from_git(tag_prefix, verbose=False):
 
     try:
         source_dir = os.path.dirname(os.path.abspath(__file__))
-    except NameError:
+    except NameError as e:
         # some py2exe/bbfreeze/non-CPython implementations don't do __file__
-        return {} # not always correct
+        print("Warning: unable to find version because we could not obtain the source directory.")
+        print(e)
+        return {}
     GIT = "git"
     if sys.platform == "win32":
         GIT = "git.cmd"
     stdout = run_command([GIT, "describe", "--tags", "--dirty", "--always"],
                          cwd=source_dir)
     if stdout is None:
+        # run_command already complained.
         return {}
     if not stdout.startswith(tag_prefix):
-        if verbose:
-            print("tag '%s' doesn't start with prefix '%s'" % (stdout, tag_prefix))
+        print("Warning: tag %r doesn't start with prefix %r." % (stdout, tag_prefix))
         return {}
     version = stdout[len(tag_prefix):]
     pieces = version.split("-")
@@ -313,6 +323,7 @@ def versions_from_git(tag_prefix, verbose=False):
 
     stdout = run_command([GIT, "rev-parse", "HEAD"], cwd=source_dir)
     if stdout is None:
+        # run_command already complained.
         return {}
     full = stdout.strip()
     if version.endswith("-dirty"):
@@ -340,19 +351,25 @@ class UpdateVersion(Command):
     def finalize_options(self):
         pass
     def run(self):
+        global version
+        verstr = version
         if os.path.isdir(os.path.join(basedir, ".git")):
             verstr = self.try_from_git()
-        else:
-            print("no version-control data found, leaving _version.py alone")
-            return
+
         if verstr:
             self.distribution.metadata.version = verstr
+        else:
+            print("""\
+********************************************************************
+Warning: no version information found. This may cause tests to fail.
+********************************************************************
+""")
 
     def try_from_git(self):
-        versions = versions_from_git("allmydata-tahoe-", verbose=True)
+        # If we change APPNAME, the release tag names should also change from then on.
+        versions = versions_from_git(APPNAME + '-')
         if versions:
-            fn = 'src/allmydata/_version.py'
-            f = open(fn, "wb")
+            f = open(VERSION_PY_FILENAME, "wb")
             f.write(GIT_VERSION_BODY %
                     { "pkgname": self.distribution.get_name(),
                       "version": versions["version"],
@@ -361,7 +378,8 @@ class UpdateVersion(Command):
                       "branch": versions["branch"],
                     })
             f.close()
-            print("git-version: wrote '%s' into '%s'" % (versions["version"], fn))
+            print("Wrote normalized version %r into '%s'" % (versions["normalized"], VERSION_PY_FILENAME))
+
         return versions.get("normalized", None)
 
 
@@ -421,11 +439,11 @@ if version:
 
 setup(name=APPNAME,
       description='secure, decentralized, fault-tolerant filesystem',
-      long_description=open('README.txt', 'rU').read(),
+      long_description=open('README.rst', 'rU').read(),
       author='the Tahoe-LAFS project',
       author_email='tahoe-dev@tahoe-lafs.org',
       url='https://tahoe-lafs.org/',
-      license='GNU GPL', # see README.txt -- there is an alternative licence
+      license='GNU GPL', # see README.rst -- there is an alternative licence
       cmdclass={"trial": Trial,
                 "make_executable": MakeExecutable,
                 "update_version": UpdateVersion,
@@ -443,18 +461,17 @@ setup(name=APPNAME,
                 'allmydata.test',
                 'allmydata.util',
                 'allmydata.web',
-                'allmydata.web.static',
-                'allmydata.web.static.css',
                 'allmydata.windows',
                 'buildtest'],
       classifiers=trove_classifiers,
       test_suite="allmydata.test",
       install_requires=install_requires,
       tests_require=tests_require,
-      package_data={"allmydata.web": ["*.xhtml"],
-                    "allmydata.web.static": ["*.js", "*.png", "*.css"],
-                    "allmydata.web.static.css": ["*.css"],
-                    "allmydata.web.static.img": ["*.png"],
+      package_data={"allmydata.web": ["*.xhtml",
+                                      "static/*.js", "static/*.png", "static/*.css",
+                                      "static/img/*.png",
+                                      "static/css/*.css",
+                                      ]
                     },
       setup_requires=setup_requires,
       entry_points = { 'console_scripts': [ 'tahoe = allmydata.scripts.runner:run' ] },

@@ -646,7 +646,7 @@ class Help(unittest.TestCase):
 
     def test_start(self):
         help = str(startstop_node.StartOptions())
-        self.failUnlessIn(" [global-opts] start [options] [NODEDIR]", help)
+        self.failUnlessIn(" [global-opts] start [options] [NODEDIR [twistd-options]]", help)
 
     def test_stop(self):
         help = str(startstop_node.StopOptions())
@@ -654,11 +654,11 @@ class Help(unittest.TestCase):
 
     def test_restart(self):
         help = str(startstop_node.RestartOptions())
-        self.failUnlessIn(" [global-opts] restart [options] [NODEDIR]", help)
+        self.failUnlessIn(" [global-opts] restart [options] [NODEDIR [twistd-options]]", help)
 
     def test_run(self):
         help = str(startstop_node.RunOptions())
-        self.failUnlessIn(" [global-opts] run [options] [NODEDIR]", help)
+        self.failUnlessIn(" [global-opts] run [options] [NODEDIR [twistd-options]]", help)
 
     def test_create_client(self):
         help = str(create_node.CreateClientOptions())
@@ -1981,8 +1981,7 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
             self.filecap = out.strip()
         d.addCallback(_put_file)
 
-        # Let's try copying this to the disk using the filecap
-        #  cp FILECAP filename
+        # Let's try copying this to the disk using the filecap.
         d.addCallback(lambda ign: self.do_cli("cp", self.filecap, fn2))
         def _copy_file((rc, out, err)):
             self.failUnlessReallyEqual(rc, 0)
@@ -1990,8 +1989,8 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
             self.failUnlessReallyEqual(results, DATA1)
         d.addCallback(_copy_file)
 
-        # Test with ./ (see #761)
-        #  cp FILECAP localdir
+        # Test copying a filecap to local dir, which should fail without a
+        # destination filename (#761).
         d.addCallback(lambda ign: self.do_cli("cp", self.filecap, outdir))
         def _resp((rc, out, err)):
             self.failUnlessReallyEqual(rc, 1)
@@ -2000,19 +1999,20 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
             self.failUnlessReallyEqual(out, "")
         d.addCallback(_resp)
 
-        # Create a directory, linked at tahoe:test
+        # Create a directory, linked at tahoe:test .
         d.addCallback(lambda ign: self.do_cli("mkdir", "tahoe:test"))
         def _get_dir((rc, out, err)):
             self.failUnlessReallyEqual(rc, 0)
             self.dircap = out.strip()
         d.addCallback(_get_dir)
 
-        # Upload a file to the directory
+        # Upload a file to the directory.
         d.addCallback(lambda ign:
                       self.do_cli("put", fn1, "tahoe:test/test_file"))
         d.addCallback(lambda (rc, out, err): self.failUnlessReallyEqual(rc, 0))
 
-        #  cp DIRCAP/filename localdir
+        # Copying DIRCAP/filename to a local dir should work, because the
+        # destination filename can be inferred.
         d.addCallback(lambda ign:
                       self.do_cli("cp",  self.dircap + "/test_file", outdir))
         def _get_resp((rc, out, err)):
@@ -2021,7 +2021,7 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
             self.failUnlessReallyEqual(results, DATA1)
         d.addCallback(_get_resp)
 
-        #  cp -r DIRCAP/filename filename2
+        # ... and to an explicit filename different from the source filename.
         d.addCallback(lambda ign:
                       self.do_cli("cp",  self.dircap + "/test_file", fn3))
         def _get_resp2((rc, out, err)):
@@ -2029,11 +2029,15 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
             results = fileutil.read(fn3)
             self.failUnlessReallyEqual(results, DATA1)
         d.addCallback(_get_resp2)
-        #  cp --verbose filename3 dircap:test_file
+
+        # Test that the --verbose option prints correct indices (#1805).
         d.addCallback(lambda ign:
-                      self.do_cli("cp", "--verbose", '--recursive', self.basedir, self.dircap))
+                      self.do_cli("cp", "--verbose", fn3, self.dircap))
         def _test_for_wrong_indices((rc, out, err)):
-            self.failUnless('examining 1 of 1\n' in err)
+            lines = err.split('\n')
+            self.failUnlessIn('examining 1 of 1', lines)
+            self.failUnlessIn('starting copy, 1 files, 1 directories', lines)
+            self.failIfIn('examining 0 of', err)
         d.addCallback(_test_for_wrong_indices)
         return d
 
@@ -2074,7 +2078,7 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
         d = self.do_cli("create-alias", "tahoe")
         d.addCallback(lambda res: self.do_cli("mkdir", "tahoe:test/" + artonwall_arg))
         d.addCallback(lambda res: self.do_cli("cp", "-r", "tahoe:test", "tahoe:test2"))
-        d.addCallback(lambda res: self.do_cli("ls", "tahoe:test2"))
+        d.addCallback(lambda res: self.do_cli("ls", "tahoe:test2/test"))
         def _check((rc, out, err)):
             try:
                 unicode_to_output(u"\u00C4rtonwall")
@@ -2238,20 +2242,20 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
                 self.childuris[k] = to_str(childdata[uri_key])
         d.addCallback(_process_directory_json)
         # Now build a local directory to copy into place, like the following:
-        # source1/
-        # source1/mutable1
-        # source1/mutable2
-        # source1/imm1
-        # source1/imm3
+        # test2/
+        # test2/mutable1
+        # test2/mutable2
+        # test2/imm1
+        # test2/imm3
         def _build_local_directory(ignored):
-            source1_path = os.path.join(self.basedir, "source1")
-            fileutil.make_dirs(source1_path)
+            test2_path = os.path.join(self.basedir, "test2")
+            fileutil.make_dirs(test2_path)
             for fn in ("mutable1", "mutable2", "imm1", "imm3"):
-                fileutil.write(os.path.join(source1_path, fn), fn * 1000)
-            self.source1_path = source1_path
+                fileutil.write(os.path.join(test2_path, fn), fn * 1000)
+            self.test2_path = test2_path
         d.addCallback(_build_local_directory)
         d.addCallback(lambda ignored:
-            self.do_cli("cp", "-r", self.source1_path, "tahoe:test2"))
+            self.do_cli("cp", "-r", self.test2_path, "tahoe:"))
 
         # We expect that mutable1 and mutable2 are overwritten in-place,
         # so they'll retain their URIs but have different content.
@@ -2418,7 +2422,7 @@ class Cp(GridTestMixin, CLITestMixin, unittest.TestCase):
             fileutil.write(os.path.join(test_dir_path, f), f * 10000)
 
         d.addCallback(lambda ignored:
-            self.do_cli("cp", "-r", test_dir_path, "tahoe:test"))
+            self.do_cli("cp", "-r", test_dir_path, "tahoe:"))
         d.addCallback(_check_error_message)
         d.addCallback(lambda ignored:
             self.do_cli("ls", "--json", "tahoe:test"))
@@ -2469,6 +2473,40 @@ starting copy, 2 files, 1 directories
         d.addCallback(_check)
         return d
 
+    def test_cp_copies_dir(self):
+        # This test ensures that a directory is copied using
+        # tahoe cp -r. Refer to ticket #712:
+        # https://tahoe-lafs.org/trac/tahoe-lafs/ticket/712
+
+        self.basedir = "cli/Cp/cp_copies_dir"
+        self.set_up_grid()
+        subdir = os.path.join(self.basedir, "foo")
+        os.mkdir(subdir)
+        test1_path = os.path.join(subdir, "test1")
+        fileutil.write(test1_path, "test1")
+
+        d = self.do_cli("create-alias", "tahoe")
+        d.addCallback(lambda ign:
+            self.do_cli("cp", "-r", subdir, "tahoe:"))
+        d.addCallback(lambda ign:
+            self.do_cli("ls", "tahoe:"))
+        def _check(res, item):
+            (rc, out, err) = res
+            self.failUnlessEqual(rc, 0)
+            self.failUnlessEqual(err, "")
+            self.failUnlessIn(item, out, str(res))
+        d.addCallback(_check, "foo")
+        d.addCallback(lambda ign:
+            self.do_cli("ls", "tahoe:foo/"))
+        d.addCallback(_check, "test1")
+
+        d.addCallback(lambda ign: fileutil.rm_dir(subdir))
+        d.addCallback(lambda ign: self.do_cli("cp", "-r", "tahoe:foo", self.basedir))
+        def _check_local_fs(ign):
+            self.failUnless(os.path.isdir(self.basedir))
+            self.failUnless(os.path.isfile(test1_path))
+        d.addCallback(_check_local_fs)
+        return d
 
 class Backup(GridTestMixin, CLITestMixin, StallMixin, unittest.TestCase):
 
@@ -3298,6 +3336,37 @@ class Check(GridTestMixin, CLITestMixin, unittest.TestCase):
         d.addCallback(_check)
         return d
 
+    def test_check_with_multiple_aliases(self):
+        self.basedir = "cli/Check/check_with_multiple_aliases"
+        self.set_up_grid()
+        self.uriList = []
+        c0 = self.g.clients[0]
+        d = c0.create_dirnode()
+        def _stash_uri(n):
+            self.uriList.append(n.get_uri()) 
+        d.addCallback(_stash_uri)
+        d = c0.create_dirnode()
+        d.addCallback(_stash_uri)
+        
+        d.addCallback(lambda ign: self.do_cli("check", self.uriList[0], self.uriList[1]))
+        def _check((rc, out, err)):
+            self.failUnlessReallyEqual(rc, 0)
+            self.failUnlessReallyEqual(err, "")
+            #Ensure healthy appears for each uri
+            self.failUnlessIn("Healthy", out[:len(out)/2])
+            self.failUnlessIn("Healthy", out[len(out)/2:])
+        d.addCallback(_check)
+        
+        d.addCallback(lambda ign: self.do_cli("check", self.uriList[0], "nonexistent:"))
+        def _check2((rc, out, err)):
+            self.failUnlessReallyEqual(rc, 1)
+            self.failUnlessIn("Healthy", out)
+            self.failUnlessIn("error:", err)
+            self.failUnlessIn("nonexistent", err)
+        d.addCallback(_check2)
+        
+        return d
+
 
 class Errors(GridTestMixin, CLITestMixin, unittest.TestCase):
     def test_get(self):
@@ -3800,6 +3869,9 @@ class Options(unittest.TestCase):
         o = self.parse(["--node-directory", "there", "start"])
         self.failUnlessEqual(o["basedir"], os.path.abspath("there"))
 
+        o = self.parse(["start", "here", "--nodaemon"])
+        self.failUnlessEqual(o["basedir"], os.path.abspath("here"))
+
         self.failUnlessRaises(usage.UsageError, self.parse,
                               ["--basedir", "there", "start"])
         self.failUnlessRaises(usage.UsageError, self.parse,
@@ -3817,3 +3889,7 @@ class Options(unittest.TestCase):
                               ["--node-directory=there",
                                "start", "--basedir=here", "anywhere"])
 
+        self.failUnlessRaises(usage.UsageError, self.parse,
+                              ["--node-directory=there", "start", "--nodaemon"])
+        self.failUnlessRaises(usage.UsageError, self.parse,
+                              ["start", "--basedir=here", "--nodaemon"])
