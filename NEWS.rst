@@ -32,12 +32,12 @@ These are the patches in truckee which *do* have open pull requests upstream:
 - There is a new configuration option called ``peers.preferred`` which contains
   a list of storage server node IDs to move to the beginning of the server
   selection list. See ``configuration.rst`` for more information. (`#467`_)
-- The list of storage servers on the WUI's welcome page includes a new "Space
-  Available" column. (`#648`_)
 
 Patches that were in truckee but are now merged upstream:
 
 - tarcieri's redesigned directory listing page (`pull request #32`_)
+- The list of storage servers on the WUI's welcome page includes a new "Space
+  Available" column. (`#648`_)
 
 Truckee currently lives at https://github.com/leif/tahoe-lafs/commits/truckee
 
