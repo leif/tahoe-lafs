@@ -290,7 +290,11 @@ class Root(rend.Page):
 
         announcement = server.get_announcement()
         version = announcement["my-version"]
-
+        available_space = server.get_available_space()
+        if available_space is None:
+            available_space = "N/A"
+        else:
+            available_space = abbreviate_size(available_space)
         ctx.fillSlots("address", addr)
         ctx.fillSlots("service_connection_status", service_connection_status)
         ctx.fillSlots("service_connection_status_abs_time", service_connection_status_abs_time)
@@ -298,6 +302,7 @@ class Root(rend.Page):
         ctx.fillSlots("last_received_data_abs_time", last_received_data_abs_time)
         ctx.fillSlots("last_received_data_rel_time", last_received_data_rel_time)
         ctx.fillSlots("version", version)
+        ctx.fillSlots("available_space", available_space)
 
         return ctx.tag
 
