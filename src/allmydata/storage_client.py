@@ -267,21 +267,11 @@ class NativeStorageServer:
         return self.last_loss_time
     def get_storage_furl(self):
         return str(self.announcement["anonymous-storage-FURL"])
-    def get_available_space(self):
-        version = self.get_version()
-        if version is None:
-            return None
-        protocol_v1_version = version.get('http://allmydata.org/tahoe/protocols/storage/v1', {})
-        available_space = protocol_v1_version.get('available-space')
-        if available_space is None:
-            available_space = protocol_v1_version.get('maximum-immutable-share-size', None)
-        return available_space
     def get_last_received_data_time(self):
         if self.rref is None:
             return None
         else:
             return self.rref.getDataLastReceivedAt()
-
     def get_available_space(self):
         version = self.get_version()
         if version is None:

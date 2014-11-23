@@ -1,5 +1,7 @@
-import unittest
+
+from twisted.trial import unittest
 from allmydata.storage_client import NativeStorageServer
+
 
 class NativeStorageServerWithVersion(NativeStorageServer):
     def __init__(self,version):
@@ -7,8 +9,8 @@ class NativeStorageServerWithVersion(NativeStorageServer):
     def get_version(self):
         return self.version
 
-class TestNativeStorageServer(unittest.TestCase):
 
+class TestNativeStorageServer(unittest.TestCase):
     def test_get_available_space_new(self):
         nss = NativeStorageServerWithVersion(
             { "http://allmydata.org/tahoe/protocols/storage/v1":
