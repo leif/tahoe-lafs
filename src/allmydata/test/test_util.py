@@ -977,7 +977,7 @@ class TimeFormat(unittest.TestCase):
             time_format.format_delta(time_1, time_1d21h46m49s_delta),
             (time_1_isostr, '1d21h46m49s'))
 
-        # time_1 with a decimal fraction will make the delta 1s less 
+        # time_1 with a decimal fraction will make the delta 1s less
         time_1decimal = 1389812723.383963
 
         self.failUnlessEqual(
