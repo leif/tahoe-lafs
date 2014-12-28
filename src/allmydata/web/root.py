@@ -248,7 +248,7 @@ class Root(rend.Page):
     def render_introducers_row(self, ctx, s):
         (furl, connected, ic) = s
         service_connection_status = ["Disconnected", "Connected"][connected]
-        service_connection_status_abs_time, service_connection_status_rel_time = format_delta(ic.get_since())
+        service_connection_status_abs_time, service_connection_status_rel_time = format_delta(ic.get_since(), self.now())
         status = ("no", "yes")
         ctx.fillSlots("introducer_furl", "%s" % (furl))
         ctx.fillSlots("connected-bool", "%s" % (connected))
