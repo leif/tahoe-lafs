@@ -35,4 +35,3 @@ server.%s.furl = %s
 """ % (peerid, peerid, nickname, peerid, seed, peerid, furl)
 
         return config
-        

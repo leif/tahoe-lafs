@@ -43,7 +43,7 @@ from allmydata.introducer import IntroducerNode
 # create a fake uploader/downloader, and a couple of fake dirnodes, then
 # create a webserver that works against them
 
-timeout = 960 # allmydata.test.test_web.Grid.test_deep_check took longer than 480 seconds on zomp
+timeout = 480 # Most of these take longer than 240 seconds on Francois's arm box.
 
 unknown_rwcap = u"lafs://from_the_future_rw_\u263A".encode('utf-8')
 unknown_rocap = u"ro.lafs://readonly_from_the_future_ro_\u263A".encode('utf-8')
