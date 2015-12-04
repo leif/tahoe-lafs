@@ -10,8 +10,12 @@ Truckee-LAFS
 Truckee is near Tahoe. This branch includes changes which are not yet ready for
 inclusion upstream due to lack of review, tests, or other reasons.
 
-This branch will not be rebased, and is expected to frequently have the
-official Tahoe-LAFS master merged.
+**Truckee is currently (Dec 4, 2015) about a year behind master. Work is
+currently underway to merge the last year of Tahoe-LAFS development into this
+branch (and create some new pull requests upstream in the process).**
+
+This branch will not be rebased, and is expected to occasionally have the
+upstream Tahoe-LAFS master merged.
 
 Current differences between Truckee and the Tahoe-LAFS upstream master which
 don't have open pull requests:
@@ -29,15 +33,17 @@ don't have open pull requests:
 
 These are the patches in truckee which *do* have open pull requests upstream:
 
-- There is a new configuration option called ``peers.preferred`` which contains
-  a list of storage server node IDs to move to the beginning of the server
-  selection list. See ``configuration.rst`` for more information. (`#467`_)
+- None currently, but there should be some soon.
 
 Patches that were in truckee but are now merged upstream:
 
 - tarcieri's redesigned directory listing page (`pull request #32`_)
 - The list of storage servers on the WUI's welcome page includes a new "Space
   Available" column. (`#648`_)
+- There is a new configuration option called ``peers.preferred`` which contains
+  a list of storage server node IDs to move to the beginning of the server
+  selection list. See ``configuration.rst`` for more information. (`#467`_)
+
 
 Truckee currently lives at https://github.com/leif/tahoe-lafs/commits/truckee
 

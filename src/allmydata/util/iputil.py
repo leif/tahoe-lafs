@@ -125,6 +125,7 @@ def get_local_ip_for(target):
         # avoid this DNS lookup. This also makes node startup fractionally
         # faster.
         return None
+    return None
     udpprot = DatagramProtocol()
     port = reactor.listenUDP(0, udpprot)
     try:
