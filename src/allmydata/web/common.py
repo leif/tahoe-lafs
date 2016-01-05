@@ -217,10 +217,10 @@ def render_time_delta(time_1, time_2):
     return spaces_to_nbsp(format_delta(time_1, time_2))
 
 def render_time(t):
-    return spaces_to_nbsp(format_time(time.localtime(t)))
+    return spaces_to_nbsp(format_time(time.gmtime(t)))
 
 def render_time_attr(t):
-    return format_time(time.localtime(t))
+    return format_time(time.gmtime(t))
 
 class WebError(Exception):
     def __init__(self, text, code=http.BAD_REQUEST):
