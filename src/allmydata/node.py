@@ -12,6 +12,7 @@ from allmydata.util import fileutil, iputil, observer
 from allmydata.util.assertutil import precondition, _assert
 from allmydata.util.fileutil import abspath_expanduser_unicode
 from allmydata.util.encodingutil import get_filesystem_encoding, quote_output
+from allmydata.util import configutil
 
 # Add our application versions to the data that Foolscap's LogPublisher
 # reports.
@@ -93,12 +94,11 @@ class Node(service.MultiService):
         iputil.increase_rlimits()
 
     def init_tempdir(self):
-        local_tempdir_utf8 = "tmp" # default is NODEDIR/tmp/
-        tempdir = self.get_config("node", "tempdir", local_tempdir_utf8).decode('utf-8')
-        tempdir = os.path.join(self.basedir, tempdir)
+        tempdir_config = self.get_config("node", "tempdir", "tmp").decode('utf-8')
+        tempdir = abspath_expanduser_unicode(tempdir_config, base=self.basedir)
         if not os.path.exists(tempdir):
             fileutil.make_dirs(tempdir)
-        tempfile.tempdir = abspath_expanduser_unicode(tempdir)
+        tempfile.tempdir = tempdir
         # this should cause twisted.web.http (which uses
         # tempfile.TemporaryFile) to put large request bodies in the given
         # directory. Without this, the default temp dir is usually /tmp/,
@@ -134,27 +134,13 @@ class Node(service.MultiService):
                                          % (quote_output(fn), section, option))
             return default
 
-    def set_config(self, section, option, value):
-        if not self.config.has_section(section):
-            self.config.add_section(section)
-        self.config.set(section, option, value)
-        assert self.config.get(section, option) == value
-
     def read_config(self):
         self.error_about_old_config_files()
         self.config = ConfigParser.SafeConfigParser()
 
         tahoe_cfg = os.path.join(self.basedir, "tahoe.cfg")
         try:
-            f = open(tahoe_cfg, "rb")
-            try:
-                # Skip any initial Byte Order Mark. Since this is an ordinary file, we
-                # don't need to handle incomplete reads, and can assume seekability.
-                if f.read(3) != '\xEF\xBB\xBF':
-                    f.seek(0)
-                self.config.readfp(f)
-            finally:
-                f.close()
+            self.config = configutil.get_config(tahoe_cfg)
         except EnvironmentError:
             if os.path.exists(tahoe_cfg):
                 raise
@@ -166,7 +152,7 @@ class Node(service.MultiService):
             # provide a value.
             try:
                 file_tubport = fileutil.read(self._portnumfile).strip()
-                self.set_config("node", "tub.port", file_tubport)
+                configutil.set_config(self.config, "node", "tub.port", file_tubport)
             except EnvironmentError:
                 if os.path.exists(self._portnumfile):
                     raise
@@ -220,11 +206,12 @@ class Node(service.MultiService):
     def setup_ssh(self):
         ssh_port = self.get_config("node", "ssh.port", "")
         if ssh_port:
-            ssh_keyfile = self.get_config("node", "ssh.authorized_keys_file").decode('utf-8')
+            ssh_keyfile_config = self.get_config("node", "ssh.authorized_keys_file").decode('utf-8')
+            ssh_keyfile = abspath_expanduser_unicode(ssh_keyfile_config, base=self.basedir)
             from allmydata import manhole
-            m = manhole.AuthorizedKeysManhole(ssh_port, ssh_keyfile.encode(get_filesystem_encoding()))
+            m = manhole.AuthorizedKeysManhole(ssh_port, ssh_keyfile)
             m.setServiceParent(self)
-            self.log("AuthorizedKeysManhole listening on %s" % ssh_port)
+            self.log("AuthorizedKeysManhole listening on %s" % (ssh_port,))
 
     def get_app_versions(self):
         # TODO: merge this with allmydata.get_package_versions
@@ -326,7 +313,6 @@ class Node(service.MultiService):
 
         service.MultiService.startService(self)
         d = defer.succeed(None)
-        d.addCallback(lambda res: iputil.get_local_addresses_async())
         d.addCallback(self._setup_tub)
         def _ready(res):
             self.log("%s running" % self.NODETYPE)
@@ -382,15 +368,14 @@ class Node(service.MultiService):
             self.tub.setOption("log-gatherer-furl", lgfurl)
         self.tub.setOption("log-gatherer-furlfile",
                            os.path.join(self.basedir, "log_gatherer.furl"))
-        self.tub.setOption("bridge-twisted-logs", True)
-        incidents_dir = os.path.expanduser(self.get_config("node", "incidents_dir",  "logs/incidents"))
+        incidents_dir = os.path.expanduser(self.get_config("node", "incidents_dir",  os.path.join("logs","incidents")))
         incidents_dir = os.path.join(self.basedir, incidents_dir)
         foolscap.logging.log.setLogDir(incidents_dir.encode(get_filesystem_encoding()))
 
     def log(self, *args, **kwargs):
         return log.msg(*args, **kwargs)
 
-    def _setup_tub(self, local_addresses):
+    def _setup_tub(self, ign):
         # we can't get a dynamically-assigned portnum until our Tub is
         # running, which means after startService.
         l = self.tub.getListeners()[0]
@@ -399,13 +384,29 @@ class Node(service.MultiService):
         # next time
         fileutil.write_atomically(self._portnumfile, "%d\n" % portnum, mode="")
 
-        base_location = ",".join([ "%s:%d" % (addr, portnum)
-                                   for addr in local_addresses ])
-        location = self.get_config("node", "tub.location", base_location)
-        self.log("Tub location set to %s" % location)
-        self.tub.setLocation(location)
+        location = self.get_config("node", "tub.location", "AUTO")
 
-        return self.tub
+        # Replace the location "AUTO", if present, with the detected local addresses.
+        split_location = location.split(",")
+        if "AUTO" in split_location:
+            d = iputil.get_local_addresses_async()
+            def _add_local(local_addresses):
+                while "AUTO" in split_location:
+                    split_location.remove("AUTO")
+
+                split_location.extend([ "%s:%d" % (addr, portnum)
+                                        for addr in local_addresses ])
+                return ",".join(split_location)
+            d.addCallback(_add_local)
+        else:
+            d = defer.succeed(location)
+
+        def _got_location(location):
+            self.log("Tub location set to %s" % (location,))
+            self.tub.setLocation(location)
+            return self.tub
+        d.addCallback(_got_location)
+        return d
 
     def when_tub_ready(self):
         return self._tub_ready_observerlist.when_fired()

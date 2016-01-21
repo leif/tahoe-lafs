@@ -4,7 +4,7 @@
 Configuring a Tahoe-LAFS node
 =============================
 
-1.   `Node Types`_
+1.  `Node Types`_
 2.  `Overall Node Configuration`_
 3.  `Client Configuration`_
 4.  `Storage Server Configuration`_
@@ -35,12 +35,13 @@ create-client``" command will create an initial ``tahoe.cfg`` file for
 you. After creation, the node will never modify the ``tahoe.cfg`` file: all
 persistent state is put in other files.
 
-A second file "``BASEDIR/introducers``" configures introducers. It is necessary
-to write all FURL entries into this file. Each line in this file contains
-exactly one FURL entry (except lines beginning with ``#`` which are ignored).
-For backward compatibility reasons, any "``introducer.furl``" entry found in
-``tahoe.cfg`` file will automatically be copied into this file.  Keeping any
-FURL entry in tahoe.cfg file is not recommended for new users.
+A second file "``BASEDIR/private/introducers``" configures introducers. It is
+necessary to write all FURL entries into this file. Each line in this file
+contains exactly one FURL entry (except lines beginning with ``#`` which are
+ignored).  For backward compatibility reasons, any "``introducer.furl``" entry
+found in the ``tahoe.cfg`` file will automatically be copied into this file.
+Keeping a FURL entry in the ``tahoe.cfg`` file is not recommended for new
+users.
 
 The item descriptions below use the following types:
 
@@ -172,6 +173,11 @@ set the ``tub.location`` option described below.
     this when using a Tor proxy to avoid revealing your actual IP address
     through the Introducer announcement.
 
+    If ``tub.location`` is specified, by default it entirely replaces the
+    automatically determined set of IP addresses. To include the automatically
+    determined addresses as well as the specified ones, include the uppercase
+    string "``AUTO``" in the list.
+
     The value is a comma-separated string of host:port location hints, like
     this::
 
@@ -189,6 +195,11 @@ set the ``tub.location`` option described below.
 
         tub.port = 8098
         tub.location = tahoe.example.com:8098
+
+    * Use a DNS name but also include the default set of addresses::
+
+        tub.port = 8098
+        tub.location = tahoe.example.com:8098,AUTO
 
     * Run a node behind a firewall (which has an external IP address) that
       has been configured to forward port 7912 to our internal node's port
@@ -320,8 +331,8 @@ Client Configuration
 ``introducer.furl = (FURL string, optional)``
 
     This option is kept for backward compatibility. If set, its value will be
-    appended to the ``BASEDIR/introducers`` file if it is not already present
-    there.
+    appended to the ``BASEDIR/private/introducers`` file if it is not already
+    present there.
 
 ``helper.furl = (FURL string, optional)``
 
@@ -405,6 +416,31 @@ Client Configuration
 .. _helper.rst: helper.rst
 .. _performance.rst: performance.rst
 .. _mutable.rst: specifications/mutable.rst
+
+``peers.preferred = (string, optional)``
+
+    This is an optional comma-separated list of Node IDs of servers that will
+    be tried first when selecting storage servers for reading or writing.
+
+    Servers should be identified here by their Node ID as it appears in the web
+    ui, underneath the server's nickname. For storage servers running tahoe
+    versions >=1.10 (if the introducer is also running tahoe >=1.10) this will
+    be a "Node Key" (which is prefixed with 'v0-'). For older nodes, it will be
+    a TubID instead. When a preferred server (and/or the introducer) is
+    upgraded to 1.10 or later, clients must adjust their configs accordingly.
+
+    Every node selected for upload, whether preferred or not, will still
+    receive the same number of shares (one, if there are ``N`` or more servers
+    accepting uploads). Preferred nodes are simply moved to the front of the
+    server selection lists computed for each file.
+
+    This is useful if a subset of your nodes have different availability or
+    connectivity characteristics than the rest of the grid. For instance, if
+    there are more than ``N`` servers on the grid, and ``K`` or more of them
+    are at a single physical location, it would make sense for clients at that
+    location to prefer their local servers so that they can maintain access to
+    all of their uploads without using the internet.
+
 
 
 Client Server Selection

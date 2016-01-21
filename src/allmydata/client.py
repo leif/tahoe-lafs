@@ -15,7 +15,9 @@ from allmydata.immutable.offloaded import Helper
 from allmydata.control import ControlServer
 from allmydata.introducer.client import IntroducerClient
 from allmydata.util import hashutil, base32, pollmixin, log, keyutil, idlib
-from allmydata.util.encodingutil import get_filesystem_encoding
+from allmydata.util.encodingutil import get_filesystem_encoding, \
+     from_utf8_or_none
+from allmydata.util.fileutil import abspath_expanduser_unicode
 from allmydata.util.abbreviate import parse_abbreviated_size
 from allmydata.util.time_format import parse_duration, parse_date
 from allmydata.stats import StatsProvider
@@ -31,8 +33,6 @@ MiB=1024*KiB
 GiB=1024*MiB
 TiB=1024*GiB
 PiB=1024*TiB
-
-MULTI_INTRODUCERS_CFG = "introducers"
 
 def _make_secret():
     return base32.b2a(os.urandom(hashutil.CRYPTO_VAL_SIZE)) + "\n"
@@ -182,18 +182,17 @@ class Client(node.Node, pollmixin.PollMixin):
     def init_introducer_clients(self):
         self.introducer_furls = []
         self.warn_flag = False
-        # Try to load ""BASEDIR/introducers" cfg file
-        cfg = os.path.join(self.basedir, MULTI_INTRODUCERS_CFG)
+        # Try to load ""BASEDIR/private/introducers" cfg file
+        cfg = os.path.join(self.basedir, "private", "introducers")
         if os.path.exists(cfg):
-           f = open(cfg, 'r')
-           for introducer_furl in  f.read().split('\n'):
-                introducers_furl = introducer_furl.strip()
-                if introducers_furl.startswith('#') or not introducers_furl:
+            f = open(cfg, 'r')
+            for introducer_furl in f.read().split('\n'):
+                introducer_furl_stripped = introducer_furl.strip()
+                if introducer_furl_stripped.startswith('#') or not introducer_furl_stripped:
                     continue
-                self.introducer_furls.append(introducer_furl)
-           f.close()
+                self.introducer_furls.append(introducer_furl_stripped)
+            f.close()
         furl_count = len(self.introducer_furls)
-        #print "@icfg: furls: %d" %furl_count
 
         # read furl from tahoe.cfg
         ifurl = self.get_config("client", "introducer.furl", None)
@@ -206,7 +205,6 @@ class Client(node.Node, pollmixin.PollMixin):
             if furl_count > 1:
                 self.warn_flag = True
                 self.log("introducers config file modified.")
-                print "Warning! introducers config file modified."
 
         # create a pool of introducer_clients
         self.introducer_clients = []
@@ -384,7 +382,8 @@ class Client(node.Node, pollmixin.PollMixin):
     def init_client_storage_broker(self):
         # create a StorageFarmBroker object, for use by Uploader/Downloader
         # (and everybody else who wants to use storage servers)
-        preferred_peers = [p.strip() for p in self.get_config("client", "peers.preferred", "").split(",") if p != ""]
+        ps = self.get_config("client", "peers.preferred", "").split(",")
+        preferred_peers = tuple([p.strip() for p in ps if p != ""])
         sb = storage_client.StorageFarmBroker(self.tub, permute_peers=True, preferred_peers=preferred_peers)
         self.storage_broker = sb
 
@@ -497,14 +496,17 @@ class Client(node.Node, pollmixin.PollMixin):
 
         from allmydata.webish import WebishServer
         nodeurl_path = os.path.join(self.basedir, "node.url")
-        staticdir = self.get_config("node", "web.static", "public_html")
-        staticdir = os.path.expanduser(staticdir)
+        staticdir_config = self.get_config("node", "web.static", "public_html").decode("utf-8")
+        staticdir = abspath_expanduser_unicode(staticdir_config, base=self.basedir)
         ws = WebishServer(self, webport, nodeurl_path, staticdir)
         self.add_service(ws)
 
     def init_ftp_server(self):
         if self.get_config("ftpd", "enabled", False, boolean=True):
-            accountfile = self.get_config("ftpd", "accounts.file", None)
+            accountfile = from_utf8_or_none(
+                self.get_config("ftpd", "accounts.file", None))
+            if accountfile:
+                accountfile = abspath_expanduser_unicode(accountfile, base=self.basedir)
             accounturl = self.get_config("ftpd", "accounts.url", None)
             ftp_portstr = self.get_config("ftpd", "port", "8021")
 
@@ -514,11 +516,14 @@ class Client(node.Node, pollmixin.PollMixin):
 
     def init_sftp_server(self):
         if self.get_config("sftpd", "enabled", False, boolean=True):
-            accountfile = self.get_config("sftpd", "accounts.file", None)
+            accountfile = from_utf8_or_none(
+                self.get_config("sftpd", "accounts.file", None))
+            if accountfile:
+                accountfile = abspath_expanduser_unicode(accountfile, base=self.basedir)
             accounturl = self.get_config("sftpd", "accounts.url", None)
             sftp_portstr = self.get_config("sftpd", "port", "8022")
-            pubkey_file = self.get_config("sftpd", "host_pubkey_file")
-            privkey_file = self.get_config("sftpd", "host_privkey_file")
+            pubkey_file = from_utf8_or_none(self.get_config("sftpd", "host_pubkey_file"))
+            privkey_file = from_utf8_or_none(self.get_config("sftpd", "host_privkey_file"))
 
             from allmydata.frontends import sftpd
             s = sftpd.SFTPServer(self, accountfile, accounturl,

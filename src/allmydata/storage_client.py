@@ -122,13 +122,13 @@ class StorageFarmBroker:
     def get_servers_for_psi(self, peer_selection_index):
         # return a list of server objects (IServers)
         assert self.permute_peers == True
+        connected_servers = self.get_connected_servers()
+        preferred_servers = frozenset(s for s in connected_servers if s.get_longname() in self.preferred_peers)
         def _permuted(server):
             seed = server.get_permutation_seed()
-            return sha1(peer_selection_index + seed).digest()
-        connected_servers = self.get_connected_servers()
-        preferred_servers = frozenset([s for s in connected_servers if s.get_longname() in self.preferred_peers])
-        unpreferred_servers = connected_servers - preferred_servers
-        return sorted(preferred_servers, key=_permuted) + sorted(unpreferred_servers, key=_permuted)
+            is_unpreferred = server not in preferred_servers
+            return (is_unpreferred, sha1(peer_selection_index + seed).digest())
+        return sorted(connected_servers, key=_permuted)
 
     def get_all_serverids(self):
         return frozenset(self.servers.keys())
